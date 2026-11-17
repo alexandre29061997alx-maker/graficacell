@@ -1,3 +1,4 @@
+ 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -87,8 +88,8 @@
     <!-- Conteúdo Principal -->
     <main class="flex-1 max-w-lg w-full mx-auto px-4 py-6 pb-28 space-y-5">
 
-        <!-- BLOCO DE QR CODE FIXO -->
-        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 text-center space-y-4">
+        <!-- TELA 1: EXIBIDA NO TOTEM (QR CODE FIXO) -->
+        <div id="view-totem" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 text-center space-y-4">
             <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-800 border border-blue-200 px-3.5 py-1.5 rounded-full text-xs font-bold">
                 <i class="fa-solid fa-qrcode text-blue-600"></i>
                 <span>QR Code Fixo de Autoatendimento</span>
@@ -96,7 +97,7 @@
 
             <div>
                 <h2 class="text-lg font-extrabold text-slate-900">Escaneie com a câmera do celular</h2>
-                <p class="text-xs text-slate-500 mt-1">A cliente aponta o celular, o arquivo é enviado e a impressora dispara automaticamente.</p>
+                <p class="text-xs text-slate-500 mt-1">Aponte a câmera para abrir a aba de envio direto no seu smartphone.</p>
             </div>
 
             <div class="flex justify-center my-2">
@@ -106,12 +107,33 @@
             </div>
 
             <div class="pt-2 border-t border-slate-100">
-                <p class="text-[11px] text-slate-400 mb-3">Ou envie o arquivo diretamente por este terminal:</p>
-                <label for="file-input" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
-                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
-                    <span>Selecionar Documento / Arquivo</span>
-                </label>
-                <input type="file" id="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden" onchange="handleDirectPrint(event)">
+                <p class="text-[11px] text-slate-400 mb-2">Modo de Teste Local (Totem):</p>
+                <button onclick="switchToClientView()" class="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                    Simular Acesso do Celular (Cliente)
+                </button>
+            </div>
+        </div>
+
+        <!-- TELA 2: EXIBIDA NO CELULAR DO CLIENTE (APÓS ESCANEAR O QR CODE) -->
+        <div id="view-client" class="hidden space-y-5 fade-in">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 text-center space-y-4">
+                <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3.5 py-1.5 rounded-full text-xs font-bold">
+                    <i class="fa-solid fa-mobile-screen-button text-emerald-600"></i>
+                    <span>Área de Envio do Cliente</span>
+                </div>
+
+                <div>
+                    <h2 class="text-lg font-extrabold text-slate-900">Escolha o seu documento</h2>
+                    <p class="text-xs text-slate-500 mt-1">Selecione o arquivo desejado. Ele será enviado e impresso automaticamente na GraficaCell.</p>
+                </div>
+
+                <div class="pt-2">
+                    <label for="file-input" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2.5 cursor-pointer">
+                        <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                        <span>Selecionar Arquivo (PDF / Imagem)</span>
+                    </label>
+                    <input type="file" id="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden" onchange="handleDirectPrint(event)">
+                </div>
             </div>
         </div>
 
@@ -133,11 +155,11 @@
                 <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
                     Impresso com Sucesso
                 </span>
-                <h3 class="text-xl font-extrabold text-slate-900 mt-2">Arquivo Impreso Automaticamente!</h3>
+                <h3 class="text-xl font-extrabold text-slate-900 mt-2">Arquivo Impresso Automaticamente!</h3>
                 <p id="success-details" class="text-xs text-slate-500 mt-1">document.pdf • 3 páginas contabilizadas</p>
             </div>
             <button onclick="resetTerminal()" class="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-xs transition">
-                Pronto para Próximo Cliente
+                Enviar Outro Arquivo
             </button>
         </div>
 
@@ -198,8 +220,8 @@
                 </div>
 
                 <div class="space-y-2">
-                    <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Histórico de Atendimentos Temporários</h4>
-                    <p class="text-xs text-slate-500">Os arquivos dos clientes são apagados imediatamente após a impressão. Apenas os registros de contabilidade ficam salvos.</p>
+                    <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Histórico de Atendimentos</h4>
+                    <p class="text-xs text-slate-500">Os registros abaixo ajudam no controle financeiro e de fluxo do totem.</p>
                     
                     <div id="admin-logs-list" class="bg-slate-100 rounded-2xl p-3 border border-slate-200 max-h-48 overflow-y-auto space-y-2 text-xs font-mono">
                         <p class="text-slate-400 text-center py-4">Nenhum registro recente.</p>
@@ -225,14 +247,28 @@
         window.addEventListener('DOMContentLoaded', () => {
             generateStaticQRCode();
             updateAdminStats();
+
+            // Verifica se a URL possui parâmetro para abrir diretamente no modo de envio do cliente
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'client') {
+                switchToClientView();
+            }
         });
 
         function generateStaticQRCode() {
             const qrContainer = document.getElementById('qrcode-container');
             qrContainer.innerHTML = '';
-            // Gera o QR Code fixo apontando para a página atual
-            const currentUrl = window.location.href.split('#')[0];
-            new QRCode(qrContainer, { text: currentUrl, width: 170, height: 170 });
+            
+            // Cria o link apontando para a mesma página, mas adicionando o parâmetro ?mode=client
+            const baseUrl = window.location.href.split('?')[0].split('#')[0];
+            const clientUrl = baseUrl + '?mode=client';
+
+            new QRCode(qrContainer, { text: clientUrl, width: 170, height: 170 });
+        }
+
+        function switchToClientView() {
+            document.getElementById('view-totem').classList.add('hidden');
+            document.getElementById('view-client').classList.remove('hidden');
         }
 
         function showToast(message, type = 'info') {
@@ -259,6 +295,7 @@
             const file = event.target.files[0];
             if (!file) return;
 
+            document.getElementById('view-client').classList.add('hidden');
             document.getElementById('processing-box').classList.remove('hidden');
             document.getElementById('success-box').classList.add('hidden');
 
@@ -278,22 +315,23 @@
                 registerAccountingEntry(file.name, pageCount);
 
                 document.getElementById('processing-box').classList.add('hidden');
-                document.getElementById('success-details').textContent = `${file.name} • ${pageCount} página(s) impressa(s)`;
+                document.getElementById('success-details').textContent = `${file.name} • ${pageCount} página(s) contabilizadas`;
                 document.getElementById('success-box').classList.remove('hidden');
 
-                showToast(`Arquivo enviado: ${pageCount} página(s) impressas!`, 'success');
+                showToast(`Arquivo enviado: ${pageCount} página(s) contabilizadas!`, 'success');
 
-                // Dispara a impressão automática nativa
+                // Dispara a impressão automática nativa no notebook do totem
                 setTimeout(() => {
                     window.print();
                 }, 800);
 
             } catch (err) {
                 document.getElementById('processing-box').classList.add('hidden');
+                document.getElementById('view-client').classList.remove('hidden');
                 showToast('Erro ao processar o arquivo para impressão.', 'error');
             }
 
-            // O arquivo é limpo da memória imediatamente (removido do input)
+            // O arquivo é limpo do input
             event.target.value = '';
         }
 
@@ -320,7 +358,7 @@
 
         function resetTerminal() {
             document.getElementById('success-box').classList.add('hidden');
-            document.getElementById('processing-box').classList.add('hidden');
+            document.getElementById('view-client').classList.remove('hidden');
         }
 
         // --- PAINEL DE CONTABILIDADE ADMIN ---
