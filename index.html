@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PrintExpress - Autoatendimento Local</title>
+    <title>PrintExpress - Autoatendimento GraficaCell</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,7 +15,7 @@
     <!-- PDF.js para leitura real de arquivos PDF no navegador -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
-    <!-- QRCode.js para gerar QR Code Pix dinâmico -->
+    <!-- QRCode.js para gerar QR Code Pix e QR Code de Acesso Rápido -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <!-- FontAwesome para ícones modernos -->
@@ -71,24 +72,6 @@
             border: 3px solid #10b981;
             animation: pulseRing 1.5s infinite;
         }
-
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printable-area, #printable-area * {
-                visibility: visible;
-            }
-            #printable-area {
-                position: fixed;
-                left: 0;
-                top: 0;
-                width: 100%;
-                background: white;
-                padding: 20px;
-                display: block !important;
-            }
-        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
@@ -112,7 +95,7 @@
                     <h1 class="font-bold text-base tracking-tight leading-none">PrintExpress <span class="text-emerald-400 font-extrabold">GraficaCell</span></h1>
                     <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-                        Autoatendimento de Impressão e Xerox
+                        Autoatendimento Direto de Arquivos
                     </p>
                 </div>
             </div>
@@ -126,8 +109,13 @@
         <!-- Indicador de Passos -->
         <div class="bg-slate-800/80 px-4 py-2.5 border-t border-slate-700/60">
             <div class="max-w-lg mx-auto flex items-center justify-between text-xs font-medium">
-                <div id="step-indicator-1" class="flex items-center gap-1.5 text-emerald-400 font-bold">
-                    <span class="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-[11px]">1</span>
+                <div id="step-indicator-0" class="flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <span class="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-[11px]">0</span>
+                    <span>QR Code</span>
+                </div>
+                <div class="h-[1px] flex-1 bg-slate-700 mx-2"></div>
+                <div id="step-indicator-1" class="flex items-center gap-1.5 text-slate-400">
+                    <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[11px]">1</span>
                     <span>Arquivo</span>
                 </div>
                 <div class="h-[1px] flex-1 bg-slate-700 mx-2"></div>
@@ -140,11 +128,6 @@
                     <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[11px]">3</span>
                     <span>Pagamento</span>
                 </div>
-                <div class="h-[1px] flex-1 bg-slate-700 mx-2"></div>
-                <div id="step-indicator-4" class="flex items-center gap-1.5 text-slate-400">
-                    <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[11px]">4</span>
-                    <span>Imprimir</span>
-                </div>
             </div>
         </div>
     </header>
@@ -152,11 +135,44 @@
     <!-- Conteúdo Principal -->
     <main class="flex-1 max-w-lg w-full mx-auto px-4 py-5 pb-28">
 
+        <!-- PASSO 0: ABA QR CODE DE ACESSO RÁPIDO -->
+        <section id="step-0" class="fade-in space-y-5">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 text-center space-y-4">
+                <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-800 border border-blue-200 px-3.5 py-1.5 rounded-full text-xs font-bold">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span>Envio Automático por QR Code</span>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-900">Aponte a câmera do seu celular</h2>
+                    <p class="text-sm text-slate-500 mt-1">Escaneie o código abaixo para carregar o sistema e enviar seu arquivo diretamente para impressão.</p>
+                </div>
+
+                <div class="flex justify-center my-3">
+                    <div class="p-4 bg-white rounded-2xl border-2 border-slate-200 shadow-md inline-block">
+                        <div id="quick-qrcode-container" class="flex items-center justify-center"></div>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-400">Ou, se preferir usar este terminal diretamente:</p>
+
+                <button onclick="goToStep(1)" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>Enviar Arquivo Neste Aparelho</span>
+                </button>
+            </div>
+        </section>
+
         <!-- PASSO 1: UPLOAD -->
-        <section id="step-1" class="fade-in space-y-5">
+        <section id="step-1" class="hidden fade-in space-y-5">
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
-                <h2 class="text-lg font-bold text-slate-900">1. Envie seu documento</h2>
-                <p class="text-sm text-slate-500 mt-1">Selecione um arquivo PDF, imagem ou documento para Impressão / Xerox.</p>
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-bold text-slate-900">1. Envie seu documento</h2>
+                    <button onclick="goToStep(0)" class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">
+                        Voltar ao QR Code
+                    </button>
+                </div>
+                <p class="text-sm text-slate-500">Selecione um arquivo PDF, imagem ou documento para Impressão / Xerox.</p>
 
                 <label for="file-input" class="mt-4 flex flex-col items-center justify-center border-2 border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 active:bg-blue-100/70 rounded-2xl p-7 cursor-pointer transition text-center group">
                     <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20 group-hover:scale-105 transition">
@@ -289,7 +305,7 @@
             </div>
         </section>
 
-        <!-- PASSO 3: PAGAMENTO (PIX OU CRÉDITOS GRAFICACELL / NFC) -->
+        <!-- PASSO 3: PAGAMENTO (PIX OU CRÉDITOS GRAFICACELL) -->
         <section id="step-3" class="hidden fade-in space-y-4">
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 text-center space-y-4">
                 <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-800 border border-amber-200 px-3.5 py-1.5 rounded-full text-xs font-bold">
@@ -302,7 +318,7 @@
                     <h2 id="pix-amount-display" class="text-3xl font-extrabold text-slate-900 mt-0.5">R$ 1,50</h2>
                 </div>
 
-                <!-- Botão de Débito de Créditos / Ficha GraficaCell -->
+                <!-- Botão de Débito de Créditos GraficaCell -->
                 <div class="bg-purple-50 border border-purple-200 rounded-2xl p-4 text-left space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-purple-900 uppercase flex items-center gap-1.5">
@@ -356,50 +372,7 @@
             </div>
         </section>
 
-        <!-- PASSO 4: IMPRESSÃO LIBERADA -->
-        <section id="step-4" class="hidden fade-in space-y-5">
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-emerald-200 text-center space-y-4">
-                <div class="relative w-20 h-20 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl pulse-ring">
-                    <i class="fa-solid fa-check"></i>
-                </div>
-
-                <div>
-                    <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-                        Validação de Créditos Aprovada
-                    </span>
-                    <h2 class="text-2xl font-extrabold text-slate-900 mt-2">Impressão / Xerox Liberada!</h2>
-                    <p class="text-sm text-slate-600 mt-1">O arquivo foi enviado para a fila de impressão do sistema.</p>
-                </div>
-
-                <div class="space-y-2.5 pt-2">
-                    <button onclick="window.print()" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-print"></i>
-                        <span>Imprimir / Retirar Xerox Agora</span>
-                    </button>
-
-                    <button onclick="startNewOrder()" class="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-sm transition">
-                        Nova Operação
-                    </button>
-                </div>
-            </div>
-        </section>
-
     </main>
-
-    <!-- ÁREA DE COMPROVANTE PARA IMPRESSÃO NATIVA -->
-    <div id="printable-area" class="hidden">
-        <div style="border: 2px solid #000; padding: 20px; font-family: monospace; max-width: 400px; margin: 0 auto;">
-            <h2 style="text-align: center; margin: 0;">GRAFICACELL AUTOATENDIMENTO</h2>
-            <p style="text-align: center; font-size: 12px; margin-top: 4px;">COMPROVANTE DE IMPRESSÃO / XEROX</p>
-            <hr>
-            <p><strong>PEDIDO:</strong> #<span id="print-receipt-id">0000</span></p>
-            <p><strong>DATA:</strong> <span id="print-receipt-date"></span></p>
-            <p><strong>ARQUIVO:</strong> <span id="print-receipt-file"></span></p>
-            <p><strong>TOTAL DEBITADO:</strong> <span id="print-receipt-total"></span></p>
-            <hr>
-            <p style="text-align: center; font-size: 11px;">Obrigado pela preferência!</p>
-        </div>
-    </div>
 
     <!-- TELA DE LOGIN DO ADMINISTRADOR (PROTEGIDO) -->
     <div id="admin-login-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -493,7 +466,7 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         const appState = {
-            currentStep: 1,
+            currentStep: 0,
             file: null,
             fileName: '',
             pageCount: 1,
@@ -514,7 +487,16 @@
             } catch (e) {}
             syncSettingsToUI();
             updateNfcBadgeUI();
+            generateQuickQRCode();
         });
+
+        function generateQuickQRCode() {
+            const qrContainer = document.getElementById('quick-qrcode-container');
+            qrContainer.innerHTML = '';
+            // Gera o QR Code apontando para a própria URL atual do sistema
+            const currentUrl = window.location.href.split('#')[0];
+            new QRCode(qrContainer, { text: currentUrl, width: 180, height: 180 });
+        }
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
@@ -537,27 +519,31 @@
 
         function goToStep(stepNumber) {
             appState.currentStep = stepNumber;
-            [1, 2, 3, 4].forEach(num => {
-                document.getElementById(`step-${num}`).classList.add('hidden');
-                const ind = document.getElementById(`step-indicator-${num}`);
-                const circle = ind.querySelector('span');
+            [0, 1, 2, 3].forEach(num => {
+                const section = document.getElementById(`step-${num}`);
+                if (section) section.classList.add('hidden');
                 
-                if (num < stepNumber) {
-                    ind.className = 'flex items-center gap-1.5 text-emerald-400 font-semibold';
-                    circle.className = 'w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[11px] font-bold';
-                    circle.innerHTML = '<i class="fa-solid fa-check text-[9px]"></i>';
-                } else if (num === stepNumber) {
-                    ind.className = 'flex items-center gap-1.5 text-white font-bold';
-                    circle.className = 'w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-bold';
-                    circle.textContent = num;
-                } else {
-                    ind.className = 'flex items-center gap-1.5 text-slate-400';
-                    circle.className = 'w-5 h-5 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-[11px]';
-                    circle.textContent = num;
+                const ind = document.getElementById(`step-indicator-${num}`);
+                if (ind) {
+                    const circle = ind.querySelector('span');
+                    if (num < stepNumber) {
+                        ind.className = 'flex items-center gap-1.5 text-emerald-400 font-semibold';
+                        circle.className = 'w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[11px] font-bold';
+                        circle.innerHTML = '<i class="fa-solid fa-check text-[9px]"></i>';
+                    } else if (num === stepNumber) {
+                        ind.className = 'flex items-center gap-1.5 text-white font-bold';
+                        circle.className = 'w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-bold';
+                        circle.textContent = num;
+                    } else {
+                        ind.className = 'flex items-center gap-1.5 text-slate-400';
+                        circle.className = 'w-5 h-5 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-[11px]';
+                        circle.textContent = num;
+                    }
                 }
             });
 
-            document.getElementById(`step-${stepNumber}`).classList.remove('hidden');
+            const activeSection = document.getElementById(`step-${stepNumber}`);
+            if (activeSection) activeSection.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             if (stepNumber === 2) updateOrderCalculation();
@@ -684,7 +670,6 @@
         }
 
         function simulateWebhookApproval() {
-            // Regra estrita: Valida se o saldo de créditos GraficaCell cobre o valor do pedido antes de simular a liberação
             let balance = parseFloat(localStorage.getItem('graficacell_balance') || '0.00');
 
             if (balance < appState.totalAmount) {
@@ -692,24 +677,25 @@
                 return;
             }
 
-            // Debita automaticamente do saldo após liberação
+            // Debita automaticamente e aciona a impressão imediata sem gerar notinha
             balance -= appState.totalAmount;
             localStorage.setItem('graficacell_balance', balance.toFixed(2));
             updateNfcBadgeUI();
 
-            document.getElementById('print-receipt-id').textContent = appState.orderId;
-            document.getElementById('print-receipt-date').textContent = new Date().toLocaleString('pt-BR');
-            document.getElementById('print-receipt-file').textContent = appState.fileName;
-            document.getElementById('print-receipt-total').textContent = formatBRL(appState.totalAmount);
-            goToStep(4);
-            showToast('Impressão / Xerox liberada com sucesso!', 'success');
+            showToast('Pagamento aprovado! Enviando arquivo para impressora...', 'success');
+            
+            // Aciona diretamente a janela de impressão nativa do navegador para o arquivo/documento enviado
+            setTimeout(() => {
+                window.print();
+                startNewOrder();
+            }, 1000);
         }
 
         function startNewOrder() {
             resetFile();
             appState.copies = 1;
             document.getElementById('copies-count').textContent = '1';
-            goToStep(1);
+            goToStep(0);
         }
 
         // --- SISTEMA DE LOGIN DO ADMIN ---
@@ -783,4 +769,4 @@
         }
     </script>
 </body>
-</html>  
+</html>
