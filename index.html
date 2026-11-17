@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PrintExpress - Autoatendimento de Impressão</title>
+    <title>PrintExpress - Autoatendimento Local</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -49,7 +49,6 @@
             background-color: #f1f5f9;
         }
 
-        /* Animações suaves */
         .fade-in {
             animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -73,7 +72,6 @@
             animation: pulseRing 1.5s infinite;
         }
 
-        /* Estilos exclusivos para o momento da impressão nativa no Android */
         @media print {
             body * {
                 visibility: hidden;
@@ -95,7 +93,7 @@
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Toast / Notificação Flutuante (Substitui alert()) -->
+    <!-- Toast / Notificação Flutuante -->
     <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md pointer-events-none transition-all duration-300 opacity-0 -translate-y-4">
         <div id="toast-box" class="bg-slate-900 text-white px-4 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
             <i id="toast-icon" class="fa-solid fa-circle-info text-blue-400 text-lg"></i>
@@ -103,7 +101,7 @@
         </div>
     </div>
 
-    <!-- Cabeçalho App Mobile / Totem -->
+    <!-- Cabeçalho -->
     <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
         <div class="max-w-lg mx-auto px-4 py-3.5 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -111,21 +109,21 @@
                     <i class="fa-solid fa-print text-white text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base tracking-tight leading-none">PrintExpress <span class="text-emerald-400 font-extrabold">PIX</span></h1>
+                    <h1 class="font-bold text-base tracking-tight leading-none">PrintExpress <span class="text-emerald-400 font-extrabold">GraficaCell</span></h1>
                     <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-                        Totem Online • Autoatendimento
+                        Autoatendimento de Impressão e Xerox
                     </p>
                 </div>
             </div>
 
-            <!-- Botão Configurações do Dono / Admin -->
-            <button onclick="toggleAdminModal()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition text-slate-300 border border-slate-700" title="Painel do Administrador">
+            <!-- Botão Admin -->
+            <button onclick="openAdminModal()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition text-slate-300 border border-slate-700" title="Painel do Administrador">
                 <i class="fa-solid fa-gear text-base"></i>
             </button>
         </div>
 
-        <!-- Barra de Progresso dos 4 Passos -->
+        <!-- Indicador de Passos -->
         <div class="bg-slate-800/80 px-4 py-2.5 border-t border-slate-700/60">
             <div class="max-w-lg mx-auto flex items-center justify-between text-xs font-medium">
                 <div id="step-indicator-1" class="flex items-center gap-1.5 text-emerald-400 font-bold">
@@ -140,7 +138,7 @@
                 <div class="h-[1px] flex-1 bg-slate-700 mx-2"></div>
                 <div id="step-indicator-3" class="flex items-center gap-1.5 text-slate-400">
                     <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[11px]">3</span>
-                    <span>Pix</span>
+                    <span>Pagamento</span>
                 </div>
                 <div class="h-[1px] flex-1 bg-slate-700 mx-2"></div>
                 <div id="step-indicator-4" class="flex items-center gap-1.5 text-slate-400">
@@ -154,15 +152,12 @@
     <!-- Conteúdo Principal -->
     <main class="flex-1 max-w-lg w-full mx-auto px-4 py-5 pb-28">
 
-        <!-- ========================================================= -->
-        <!-- PASSO 1: UPLOAD E LEITURA REAL DO DOCUMENTO               -->
-        <!-- ========================================================= -->
+        <!-- PASSO 1: UPLOAD -->
         <section id="step-1" class="fade-in space-y-5">
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
                 <h2 class="text-lg font-bold text-slate-900">1. Envie seu documento</h2>
-                <p class="text-sm text-slate-500 mt-1">Selecione um arquivo PDF, imagem ou documento do seu celular.</p>
+                <p class="text-sm text-slate-500 mt-1">Selecione um arquivo PDF, imagem ou documento para Impressão / Xerox.</p>
 
-                <!-- Área de Upload Touch-Friendly -->
                 <label for="file-input" class="mt-4 flex flex-col items-center justify-center border-2 border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 active:bg-blue-100/70 rounded-2xl p-7 cursor-pointer transition text-center group">
                     <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20 group-hover:scale-105 transition">
                         <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
@@ -172,7 +167,6 @@
                     <input type="file" id="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden" onchange="handleFileUpload(event)">
                 </label>
 
-                <!-- Botão de Teste Rápido (Demonstração) -->
                 <div class="mt-3 flex items-center justify-between pt-3 border-t border-slate-100">
                     <span class="text-xs text-slate-400">Sem arquivo no celular agora?</span>
                     <button type="button" onclick="loadSampleDocument()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg active:scale-95 transition">
@@ -181,7 +175,6 @@
                 </div>
             </div>
 
-            <!-- Loader de Leitura PDF -->
             <div id="pdf-loading" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex items-center gap-4">
                 <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 <div>
@@ -190,7 +183,6 @@
                 </div>
             </div>
 
-            <!-- Card de Pré-visualização do Arquivo Carregado -->
             <div id="file-preview-card" class="hidden bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 fade-in space-y-4">
                 <div class="flex items-start gap-3.5">
                     <div id="file-icon-box" class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-xl">
@@ -211,7 +203,6 @@
                     </button>
                 </div>
 
-                <!-- Canvas de Preview da 1ª Página do PDF ou Imagem -->
                 <div class="bg-slate-100 rounded-2xl p-3 flex flex-col items-center justify-center border border-slate-200 overflow-hidden">
                     <canvas id="pdf-preview-canvas" class="max-h-56 w-auto rounded-lg shadow-sm bg-white hidden"></canvas>
                     <img id="img-preview-element" class="max-h-56 w-auto rounded-lg shadow-sm hidden" alt="Pré-visualização">
@@ -221,29 +212,14 @@
                     </div>
                 </div>
 
-                <!-- Ajuste manual de páginas (caso não seja PDF ou usuário queira ajustar) -->
-                <div id="manual-pages-box" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-3.5 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-amber-900">Quantidade de páginas</p>
-                        <p class="text-[11px] text-amber-700">Informe o total de páginas do arquivo</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="adjustManualPages(-1)" class="w-8 h-8 rounded-xl bg-white border border-amber-300 font-bold text-amber-900 active:scale-90">-</button>
-                        <span id="manual-pages-value" class="w-8 text-center font-bold text-sm">1</span>
-                        <button onclick="adjustManualPages(1)" class="w-8 h-8 rounded-xl bg-white border border-amber-300 font-bold text-amber-900 active:scale-90">+</button>
-                    </div>
-                </div>
-
                 <button onclick="goToStep(2)" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                    <span>Configurar Impressão</span>
+                    <span>Configurar Impressão / Xerox</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
         </section>
 
-        <!-- ========================================================= -->
-        <!-- PASSO 2: OPÇÕES DE IMPRESSÃO E CÁLCULO EM TEMPO REAL      -->
-        <!-- ========================================================= -->
+        <!-- PASSO 2: OPÇÕES -->
         <section id="step-2" class="hidden fade-in space-y-4">
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-5">
                 <div class="flex items-center justify-between">
@@ -256,7 +232,6 @@
                     </button>
                 </div>
 
-                <!-- Tipo de Cor -->
                 <div>
                     <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">Cor da Impressão</label>
                     <div class="grid grid-cols-2 gap-3">
@@ -284,37 +259,19 @@
                     </div>
                 </div>
 
-                <!-- Quantidade de Cópias -->
                 <div class="flex items-center justify-between pt-2 border-t border-slate-100">
                     <div>
                         <p class="font-bold text-sm text-slate-900">Quantidade de Cópias</p>
                         <p class="text-xs text-slate-500">Jogos completos do documento</p>
                     </div>
                     <div class="flex items-center gap-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                        <button type="button" onclick="changeCopies(-1)" class="w-10 h-10 rounded-xl bg-white shadow-sm font-bold text-lg text-slate-700 active:scale-90 transition flex items-center justify-center">
-                            -
-                        </button>
+                        <button type="button" onclick="changeCopies(-1)" class="w-10 h-10 rounded-xl bg-white shadow-sm font-bold text-lg text-slate-700 active:scale-90 transition flex items-center justify-center">-</button>
                         <span id="copies-count" class="w-8 text-center font-extrabold text-base text-slate-900">1</span>
-                        <button type="button" onclick="changeCopies(1)" class="w-10 h-10 rounded-xl bg-blue-600 shadow-sm font-bold text-lg text-white active:scale-90 transition flex items-center justify-center">
-                            +
-                        </button>
+                        <button type="button" onclick="changeCopies(1)" class="w-10 h-10 rounded-xl bg-blue-600 shadow-sm font-bold text-lg text-white active:scale-90 transition flex items-center justify-center">+</button>
                     </div>
-                </div>
-
-                <!-- Frente e Verso (Duplex) -->
-                <div class="flex items-center justify-between pt-3 border-t border-slate-100">
-                    <div>
-                        <p class="font-bold text-sm text-slate-900">Impressão Frente e Verso</p>
-                        <p class="text-xs text-slate-500">Economiza papel (mesmo valor por página)</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="duplex-toggle" class="sr-only peer" onchange="updateOrderCalculation()">
-                        <div class="w-12 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
                 </div>
             </div>
 
-            <!-- Resumo Financeiro -->
             <div class="bg-slate-900 text-white rounded-3xl p-5 shadow-lg space-y-3">
                 <div class="flex justify-between text-xs text-slate-400">
                     <span>Cálculo detalhado:</span>
@@ -327,19 +284,17 @@
 
                 <button onclick="initiatePixPayment()" class="w-full mt-2 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-slate-950 font-extrabold text-base shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2">
                     <i class="fa-brands fa-pix text-xl"></i>
-                    <span>Gerar QR Code Pix</span>
+                    <span>Ir para Validação e Pagamento</span>
                 </button>
             </div>
         </section>
 
-        <!-- ========================================================= -->
-        <!-- PASSO 3: CHECKOUT PIX DINÂMICO E WEBHOOK                  -->
-        <!-- ========================================================= -->
+        <!-- PASSO 3: PAGAMENTO (PIX OU CRÉDITOS GRAFICACELL / NFC) -->
         <section id="step-3" class="hidden fade-in space-y-4">
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 text-center space-y-4">
                 <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-800 border border-amber-200 px-3.5 py-1.5 rounded-full text-xs font-bold">
-                    <i class="fa-regular fa-clock animate-spin"></i>
-                    <span>Expira em <span id="pix-timer">05:00</span></span>
+                    <i class="fa-regular fa-clock"></i>
+                    <span>Validação de Saldo GraficaCell</span>
                 </div>
 
                 <div>
@@ -347,58 +302,61 @@
                     <h2 id="pix-amount-display" class="text-3xl font-extrabold text-slate-900 mt-0.5">R$ 1,50</h2>
                 </div>
 
-                <!-- Container do QR Code Real -->
-                <div class="flex justify-center my-2">
+                <!-- Botão de Débito de Créditos / Ficha GraficaCell -->
+                <div class="bg-purple-50 border border-purple-200 rounded-2xl p-4 text-left space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-900 uppercase flex items-center gap-1.5">
+                            <i class="fa-solid fa-wallet text-purple-600 animate-pulse"></i> Créditos GraficaCell
+                        </span>
+                        <span id="local-nfc-balance-badge" class="text-xs font-extrabold bg-purple-200 text-purple-900 px-2.5 py-1 rounded-lg">Saldo: R$ 0,00</span>
+                    </div>
+                    <p class="text-xs text-slate-600">A impressão ou xerox só será liberada se o saldo de créditos liberado na aba admin cobrir o valor total.</p>
+                    <button onclick="simulateNfcTap()" class="w-full py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white font-extrabold text-sm transition flex items-center justify-center gap-2 shadow-md">
+                        <i class="fa-solid fa-check-to-slot"></i>
+                        <span>Pagar e Liberar com Créditos GraficaCell</span>
+                    </button>
+                </div>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink mx-4 text-xs text-slate-400 uppercase font-bold">ou pague com Pix</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <div class="flex justify-center my-1">
                     <div class="p-3.5 bg-white rounded-2xl border-2 border-slate-200 shadow-inner inline-block">
                         <div id="qrcode-container" class="flex items-center justify-center"></div>
                     </div>
                 </div>
 
-                <p class="text-xs text-slate-500 max-w-xs mx-auto">
-                    Abra o app do seu banco no celular, escolha <strong>Pix Copia e Cola</strong> ou aponte a câmera para o QR Code acima.
-                </p>
-
-                <!-- Pix Copia e Cola -->
                 <div class="bg-slate-100 p-3 rounded-2xl border border-slate-200 text-left">
                     <label class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Código Pix Copia e Cola</label>
                     <div class="flex items-center gap-2">
-                        <input type="text" id="pix-copia-cola-input" readonly class="bg-transparent text-xs text-slate-700 font-mono w-full focus:outline-none truncate" value="00020126580014br.gov.bcb.pix...">
+                        <input type="text" id="pix-copia-cola-input" readonly class="bg-transparent text-xs text-slate-700 font-mono w-full focus:outline-none truncate" value="...">
                         <button onclick="copyPixCode()" class="shrink-0 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5">
                             <i class="fa-regular fa-copy"></i>
                             <span>Copiar</span>
                         </button>
                     </div>
                 </div>
-
-                <!-- Status de Aguardando Webhook -->
-                <div class="pt-2 flex items-center justify-center gap-2.5 text-xs font-semibold text-blue-700 bg-blue-50 py-3 rounded-2xl">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
-                    <span>Aguardando confirmação automática do banco...</span>
-                </div>
             </div>
 
-            <!-- Painel de Simulação de Webhook (Para Teste no Celular) -->
             <div class="bg-slate-900 text-white rounded-3xl p-4 border border-slate-700 shadow-lg space-y-3">
                 <div class="flex items-center gap-2 text-xs text-emerald-400 font-bold">
                     <i class="fa-solid fa-bolt"></i>
-                    <span>AMBIENTE DE TESTE / SIMULADOR DE WEBHOOK</span>
+                    <span>SIMULADOR DE WEBHOOK (PIX)</span>
                 </div>
-                <p class="text-xs text-slate-300 leading-relaxed">
-                    Em produção, o gateway (Mercado Pago / OpenPix) envia um POST automático assim que o Pix é pago. Toque abaixo para simular a aprovação instantânea:
-                </p>
                 <button onclick="simulateWebhookApproval()" class="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-slate-950 font-extrabold text-sm transition flex items-center justify-center gap-2 shadow-md">
                     <i class="fa-solid fa-check-double"></i>
-                    <span>Simular Pagamento Aprovado (Webhook)</span>
+                    <span>Simular Pagamento Pix Aprovado</span>
                 </button>
                 <button onclick="cancelPixAndGoBack()" class="w-full py-2 text-xs text-slate-400 hover:text-white font-medium">
-                    Cancelar e voltar às opções
+                    Voltar às opções
                 </button>
             </div>
         </section>
 
-        <!-- ========================================================= -->
-        <!-- PASSO 4: PAGAMENTO CONFIRMADO E LIBERAÇÃO DA IMPRESSÃO    -->
-        <!-- ========================================================= -->
+        <!-- PASSO 4: IMPRESSÃO LIBERADA -->
         <section id="step-4" class="hidden fade-in space-y-5">
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-emerald-200 text-center space-y-4">
                 <div class="relative w-20 h-20 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl pulse-ring">
@@ -407,34 +365,20 @@
 
                 <div>
                     <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-                        Pagamento Confirmado
+                        Validação de Créditos Aprovada
                     </span>
-                    <h2 class="text-2xl font-extrabold text-slate-900 mt-2">Impressão Liberada!</h2>
-                    <p id="release-status-text" class="text-sm text-slate-600 mt-1">
-                        O arquivo foi enviado para a fila da impressora.
-                    </p>
+                    <h2 class="text-2xl font-extrabold text-slate-900 mt-2">Impressão / Xerox Liberada!</h2>
+                    <p class="text-sm text-slate-600 mt-1">O arquivo foi enviado para a fila de impressão do sistema.</p>
                 </div>
 
-                <!-- Log Técnico de Comunicação com Print Server / Spooler -->
-                <div class="bg-slate-900 text-left rounded-2xl p-4 font-mono text-[11px] text-emerald-400 space-y-1.5 overflow-x-auto">
-                    <div class="text-slate-400 border-b border-slate-800 pb-1 mb-1 flex justify-between">
-                        <span>SPOOLER / PRINT SERVER LOG</span>
-                        <span id="log-timestamp">14:32:01</span>
-                    </div>
-                    <p id="log-line-1">✓ Webhook PIX_APPROVED recebido</p>
-                    <p id="log-line-2">✓ Token de liberação validado</p>
-                    <p id="log-line-3" class="text-blue-300">→ Disparando comando de impressão...</p>
-                </div>
-
-                <!-- Botões de Ação Física -->
                 <div class="space-y-2.5 pt-2">
-                    <button onclick="triggerPhysicalPrint()" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
+                    <button onclick="window.print()" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-print"></i>
-                        <span>Imprimir Agora / Comprovante</span>
+                        <span>Imprimir / Retirar Xerox Agora</span>
                     </button>
 
                     <button onclick="startNewOrder()" class="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-sm transition">
-                        Nova Impressão
+                        Nova Operação
                     </button>
                 </div>
             </div>
@@ -442,45 +386,70 @@
 
     </main>
 
-    <!-- ========================================================= -->
-    <!-- ÁREA OCULTA PARA IMPRESSÃO NATIVA ANDROID (@media print)  -->
-    <!-- ========================================================= -->
+    <!-- ÁREA DE COMPROVANTE PARA IMPRESSÃO NATIVA -->
     <div id="printable-area" class="hidden">
         <div style="border: 2px solid #000; padding: 20px; font-family: monospace; max-width: 400px; margin: 0 auto;">
-            <h2 style="text-align: center; margin: 0;">PRINTEXPRESS AUTOATENDIMENTO</h2>
-            <p style="text-align: center; font-size: 12px; margin-top: 4px;">COMPROVANTE DE IMPRESSÃO LIBERADA</p>
+            <h2 style="text-align: center; margin: 0;">GRAFICACELL AUTOATENDIMENTO</h2>
+            <p style="text-align: center; font-size: 12px; margin-top: 4px;">COMPROVANTE DE IMPRESSÃO / XEROX</p>
             <hr>
             <p><strong>PEDIDO:</strong> #<span id="print-receipt-id">0000</span></p>
-            <p><strong>DATA/HORA:</strong> <span id="print-receipt-date"></span></p>
+            <p><strong>DATA:</strong> <span id="print-receipt-date"></span></p>
             <p><strong>ARQUIVO:</strong> <span id="print-receipt-file"></span></p>
-            <p><strong>DETALHES:</strong> <span id="print-receipt-details"></span></p>
-            <p><strong>VALOR PAGO (PIX):</strong> <span id="print-receipt-total"></span></p>
+            <p><strong>TOTAL DEBITADO:</strong> <span id="print-receipt-total"></span></p>
             <hr>
-            <p style="text-align: center; font-size: 11px;">Obrigado por utilizar nosso totem!</p>
+            <p style="text-align: center; font-size: 11px;">Obrigado pela preferência!</p>
         </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- MODAL DE CONFIGURAÇÕES DO DONO / ADMIN & API              -->
-    <!-- ========================================================= -->
+    <!-- TELA DE LOGIN DO ADMINISTRADOR (PROTEGIDO) -->
+    <div id="admin-login-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl fade-in space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-base">Acesso Restrito</h3>
+                </div>
+                <button onclick="closeAdminLogin()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3 pt-1">
+                <div>
+                    <label class="text-xs font-bold text-slate-600 block mb-1">Login</label>
+                    <input type="text" id="admin-user-input" placeholder="Digite o login" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono text-slate-900 focus:outline-none focus:border-blue-600">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 block mb-1">Senha</label>
+                    <input type="password" id="admin-pass-input" placeholder="Digite a senha" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono text-slate-900 focus:outline-none focus:border-blue-600">
+                </div>
+            </div>
+
+            <button onclick="verifyAdminLogin()" class="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition shadow-md">
+                Entrar no Painel
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DE ADMINISTRAÇÃO E GESTÃO DE CRÉDITOS GRAFICACELL -->
     <div id="admin-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl fade-in">
-            <!-- Header Modal -->
             <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <i class="fa-solid fa-sliders text-emerald-400"></i>
-                    <h3 class="font-bold text-base">Painel do Proprietário & API</h3>
+                    <h3 class="font-bold text-base">Painel GraficaCell & Créditos</h3>
                 </div>
                 <button onclick="toggleAdminModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <!-- Corpo Scrollável -->
             <div class="p-5 overflow-y-auto space-y-5 text-sm">
                 <!-- Preços -->
                 <div class="space-y-3">
-                    <h4 class="font-bold text-slate-900 border-b pb-1.5">1. Tabela de Preços (R$)</h4>
+                    <h4 class="font-bold text-slate-900 border-b pb-1.5">1. Tabela de Preços (Impressão / Xerox)</h4>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="text-xs font-semibold text-slate-600 block mb-1">Página P&B (R$)</label>
@@ -493,109 +462,60 @@
                     </div>
                 </div>
 
-                <!-- Gateway Pix -->
-                <div class="space-y-3">
-                    <h4 class="font-bold text-slate-900 border-b pb-1.5">2. Gateway de Pagamento Pix</h4>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Provedor API</label>
-                        <select id="cfg-gateway" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white font-medium">
-                            <option value="mercadopago">Mercado Pago (Pix API)</option>
-                            <option value="openpix">OpenPix / Woovi</option>
-                            <option value="efi">Efí Bank (Gerencianet)</option>
-                            <option value="asaas">Asaas</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Chave Pix Recebedor / Nome Loja</label>
-                        <input type="text" id="cfg-pix-key" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono" value="papelaria.express@pix.com.br">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Access Token (Opcional p/ Produção)</label>
-                        <input type="password" id="cfg-api-token" placeholder="APP_USR-00000000-0000..." class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono">
-                    </div>
-                </div>
-
-                <!-- Print Server Local -->
-                <div class="space-y-3">
-                    <h4 class="font-bold text-slate-900 border-b pb-1.5">3. Print Server Local (CUPS / Spooler)</h4>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Endpoint Local de Impressão (POST)</label>
-                        <input type="text" id="cfg-print-server" placeholder="http://192.168.1.100:8080/print" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono" value="http://localhost:8080/api/spooler/release">
-                        <p class="text-[11px] text-slate-500 mt-1">Se vazio ou offline, o app usará a impressão nativa do Android (`window.print()`).</p>
-                    </div>
-                </div>
-
-                <!-- Histórico do Dia -->
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between border-b pb-1.5">
-                        <h4 class="font-bold text-slate-900">4. Histórico de Impressões Pagas</h4>
-                        <span id="admin-total-revenue" class="text-xs font-extrabold text-emerald-600">Total: R$ 0,00</span>
-                    </div>
-                    <div id="admin-history-list" class="space-y-2 max-h-36 overflow-y-auto text-xs">
-                        <p class="text-slate-400 italic">Nenhuma impressão realizada nesta sessão.</p>
+                <!-- GESTÃO DE CRÉDITOS GRAFICACELL -->
+                <div class="space-y-3 pt-2 border-t border-slate-200">
+                    <h4 class="font-bold text-slate-900 flex items-center justify-between">
+                        <span>2. Liberação de Créditos GraficaCell</span>
+                        <span class="text-[11px] font-normal text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md font-semibold">Exclusivo Admin</span>
+                    </h4>
+                    <p class="text-xs text-slate-500">Defina o valor de créditos para o cliente realizar as impressões ou cópias de xerox.</p>
+                    
+                    <div class="flex gap-2">
+                        <input type="number" id="admin-recharge-amount" step="1.00" placeholder="Valor (R$)" class="w-1/3 px-3 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-900 text-sm" value="10.00">
+                        <button onclick="adminWriteCardCredits()" class="w-2/3 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            <span>Liberar Créditos no Sistema</span>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Footer Modal -->
             <div class="p-4 bg-slate-50 border-t border-slate-200 flex gap-3">
-                <button onclick="saveAdminSettings()" class="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-bold text-sm active:scale-98 transition">
+                <button onclick="saveAdminSettings()" class="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-bold text-sm transition">
                     Salvar Configurações
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- LÓGICA JAVASCRIPT DO SISTEMA                              -->
-    <!-- ========================================================= -->
+    <!-- SCRIPT JAVASCRIPT -->
     <script>
-        // Configura o Worker do PDF.js via CDN
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // Estado Global da Aplicação
         const appState = {
             currentStep: 1,
             file: null,
             fileName: '',
-            fileType: '',
             pageCount: 1,
-            colorMode: 'bw', // 'bw' ou 'color'
+            colorMode: 'bw',
             copies: 1,
-            duplex: false,
             orderId: null,
             totalAmount: 0,
-            pixTimerInterval: null,
-            pixSecondsLeft: 300,
             settings: {
                 priceBw: 0.50,
-                priceColor: 1.50,
-                gateway: 'mercadopago',
-                pixKey: 'papelaria.express@pix.com.br',
-                apiToken: '',
-                printServerUrl: 'http://localhost:8080/api/spooler/release'
-            },
-            history: []
+                priceColor: 1.50
+            }
         };
 
-        // Carregar configurações salvas no navegador (localStorage)
         window.addEventListener('DOMContentLoaded', () => {
             try {
-                const saved = localStorage.getItem('printexpress_settings');
-                if (saved) {
-                    appState.settings = { ...appState.settings, ...JSON.parse(saved) };
-                }
-                const savedHistory = localStorage.getItem('printexpress_history');
-                if (savedHistory) {
-                    appState.history = JSON.parse(savedHistory);
-                }
-            } catch (e) {
-                console.warn('Erro ao ler localStorage:', e);
-            }
+                const saved = localStorage.getItem('graficacell_settings');
+                if (saved) appState.settings = { ...appState.settings, ...JSON.parse(saved) };
+            } catch (e) {}
             syncSettingsToUI();
+            updateNfcBadgeUI();
         });
 
-        // Exibir Toast Notification elegante (Substitui alert)
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const icon = document.getElementById('toast-icon');
@@ -615,7 +535,6 @@
             }, 3200);
         }
 
-        // Navegação entre os 4 passos
         function goToStep(stepNumber) {
             appState.currentStep = stepNumber;
             [1, 2, 3, 4].forEach(num => {
@@ -641,146 +560,62 @@
             document.getElementById(`step-${stepNumber}`).classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            if (stepNumber === 2) {
-                updateOrderCalculation();
-            }
+            if (stepNumber === 2) updateOrderCalculation();
+            if (stepNumber === 3) updateNfcBadgeUI();
         }
 
-        // =========================================================
-        // PASSO 1: PROCESSAMENTO DE ARQUIVO E LEITURA DE PDF REAL
-        // =========================================================
         async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             appState.file = file;
             appState.fileName = file.name;
-            const sizeKB = (file.size / 1024).toFixed(1);
-            const sizeFormatted = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(2)} MB` : `${sizeKB} KB`;
-
             document.getElementById('file-name-display').textContent = file.name;
-            document.getElementById('file-size-display').textContent = sizeFormatted;
             document.getElementById('pdf-loading').classList.remove('hidden');
             document.getElementById('file-preview-card').classList.add('hidden');
 
-            // Reset previews
             const pdfCanvas = document.getElementById('pdf-preview-canvas');
             const imgEl = document.getElementById('img-preview-element');
             const docPlaceholder = document.getElementById('doc-placeholder-preview');
-            const manualPagesBox = document.getElementById('manual-pages-box');
-            const fileIconBox = document.getElementById('file-icon-box');
-
             pdfCanvas.classList.add('hidden');
             imgEl.classList.add('hidden');
             docPlaceholder.classList.add('hidden');
-            manualPagesBox.classList.add('hidden');
 
             try {
                 if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-                    appState.fileType = 'pdf';
-                    fileIconBox.className = 'w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-xl';
-                    fileIconBox.innerHTML = '<i class="fa-solid fa-file-pdf"></i>';
-
-                    // Lê o PDF real usando PDF.js
                     const arrayBuffer = await file.arrayBuffer();
                     const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                     appState.pageCount = pdfDoc.numPages;
 
-                    // Renderiza a página 1 no canvas para visualização
                     const page = await pdfDoc.getPage(1);
                     const viewport = page.getViewport({ scale: 0.7 });
                     pdfCanvas.width = viewport.width;
                     pdfCanvas.height = viewport.height;
-                    const ctx = pdfCanvas.getContext('2d');
-                    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-
+                    await page.render({ canvasContext: pdfCanvas.getContext('2d'), viewport }).promise;
                     pdfCanvas.classList.remove('hidden');
-                    showToast(`PDF lido com sucesso: ${appState.pageCount} página(s)!`, 'success');
-
-                } else if (file.type.startsWith('image/')) {
-                    appState.fileType = 'image';
-                    appState.pageCount = 1;
-                    fileIconBox.className = 'w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 text-xl';
-                    fileIconBox.innerHTML = '<i class="fa-solid fa-file-image"></i>';
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        imgEl.src = e.target.result;
-                        imgEl.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
-                    showToast('Imagem carregada (1 página).', 'success');
-
+                    showToast(`PDF lido: ${appState.pageCount} página(s)!`, 'success');
                 } else {
-                    // DOCX ou outros formatos
-                    appState.fileType = 'doc';
                     appState.pageCount = 1;
-                    fileIconBox.className = 'w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-xl';
-                    fileIconBox.innerHTML = '<i class="fa-solid fa-file-word"></i>';
-
                     docPlaceholder.classList.remove('hidden');
-                    manualPagesBox.classList.remove('hidden');
-                    document.getElementById('manual-pages-value').textContent = '1';
-                    showToast('Documento carregado. Confirme o número de páginas.', 'info');
+                    showToast('Documento carregado.', 'success');
                 }
 
-                updatePageBadge();
+                document.getElementById('file-pages-badge').textContent = `${appState.pageCount} pág(s)`;
                 document.getElementById('pdf-loading').classList.add('hidden');
                 document.getElementById('file-preview-card').classList.remove('hidden');
-
             } catch (err) {
-                console.error(err);
                 document.getElementById('pdf-loading').classList.add('hidden');
-                showToast('Não foi possível ler o PDF. Verifique se não está protegido por senha.', 'error');
+                showToast('Erro ao ler o documento.', 'error');
             }
         }
 
-        // Carrega um exemplo simulado para demonstração instantânea
         function loadSampleDocument() {
-            appState.file = null;
-            appState.fileName = 'Contrato_Prestacao_Servicos_2026.pdf';
-            appState.fileType = 'pdf';
+            appState.fileName = 'Contrato_Exemplo.pdf';
             appState.pageCount = 3;
-
             document.getElementById('file-name-display').textContent = appState.fileName;
-            document.getElementById('file-size-display').textContent = '420 KB';
-            document.getElementById('file-icon-box').className = 'w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-xl';
-            document.getElementById('file-icon-box').innerHTML = '<i class="fa-solid fa-file-pdf"></i>';
-
-            // Desenha uma miniatura de página simulada no Canvas
-            const pdfCanvas = document.getElementById('pdf-preview-canvas');
-            pdfCanvas.width = 210;
-            pdfCanvas.height = 280;
-            const ctx = pdfCanvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, 210, 280);
-            ctx.fillStyle = '#1e293b';
-            ctx.font = 'bold 12px Inter, sans-serif';
-            ctx.fillText('CONTRATO DE SERVIÇOS', 24, 36);
-            ctx.fillStyle = '#94a3b8';
-            for (let y = 58; y < 240; y += 14) {
-                ctx.fillRect(24, y, (y % 28 === 0) ? 130 : 162, 6);
-            }
-
-            pdfCanvas.classList.remove('hidden');
-            document.getElementById('img-preview-element').classList.add('hidden');
-            document.getElementById('doc-placeholder-preview').classList.add('hidden');
-            document.getElementById('manual-pages-box').classList.add('hidden');
-
-            updatePageBadge();
+            document.getElementById('file-pages-badge').textContent = '3 páginas';
             document.getElementById('file-preview-card').classList.remove('hidden');
-            showToast('Arquivo de demonstração (3 páginas) carregado!', 'success');
-        }
-
-        function adjustManualPages(delta) {
-            appState.pageCount = Math.max(1, appState.pageCount + delta);
-            document.getElementById('manual-pages-value').textContent = appState.pageCount;
-            updatePageBadge();
-        }
-
-        function updatePageBadge() {
-            const label = appState.pageCount === 1 ? '1 página detectada' : `${appState.pageCount} páginas detectadas`;
-            document.getElementById('file-pages-badge').textContent = label;
+            showToast('Documento de exemplo carregado!', 'success');
         }
 
         function resetFile() {
@@ -789,26 +624,16 @@
             appState.file = null;
         }
 
-        // =========================================================
-        // PASSO 2: OPÇÕES E CÁLCULO DE PREÇO
-        // =========================================================
         function selectColorMode(mode) {
             appState.colorMode = mode;
             const btnBw = document.getElementById('btn-color-bw');
             const btnColor = document.getElementById('btn-color-color');
-            const checkBw = document.getElementById('check-bw');
-            const checkColor = document.getElementById('check-color');
-
             if (mode === 'bw') {
                 btnBw.className = 'p-4 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-left transition relative';
-                checkBw.className = 'fa-solid fa-circle-check text-blue-600 text-lg';
                 btnColor.className = 'p-4 rounded-2xl border-2 border-slate-200 bg-white text-left transition relative';
-                checkColor.className = 'fa-solid fa-circle-check text-slate-200 text-lg';
             } else {
                 btnColor.className = 'p-4 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-left transition relative';
-                checkColor.className = 'fa-solid fa-circle-check text-blue-600 text-lg';
                 btnBw.className = 'p-4 rounded-2xl border-2 border-slate-200 bg-white text-left transition relative';
-                checkBw.className = 'fa-solid fa-circle-check text-slate-200 text-lg';
             }
             updateOrderCalculation();
         }
@@ -824,238 +649,138 @@
         }
 
         function updateOrderCalculation() {
-            appState.duplex = document.getElementById('duplex-toggle').checked;
             const unitPrice = appState.colorMode === 'bw' ? appState.settings.priceBw : appState.settings.priceColor;
-            const totalPages = appState.pageCount * appState.copies;
-            appState.totalAmount = totalPages * unitPrice;
+            appState.totalAmount = (appState.pageCount * appState.copies) * unitPrice;
 
             document.getElementById('step2-doc-summary').textContent = `${appState.fileName} • ${appState.pageCount} pág(s)`;
-            document.getElementById('price-label-bw').textContent = `${formatBRL(appState.settings.priceBw)} / pág`;
-            document.getElementById('price-label-color').textContent = `${formatBRL(appState.settings.priceColor)} / pág`;
-
-            document.getElementById('calc-formula-display').textContent = 
-                `${appState.pageCount} pág × ${appState.copies} cópia(s) × ${formatBRL(unitPrice)}`;
+            document.getElementById('calc-formula-display').textContent = `${appState.pageCount} pág × ${appState.copies} cópia(s) × ${formatBRL(unitPrice)}`;
             document.getElementById('total-price-display').textContent = formatBRL(appState.totalAmount);
         }
 
-        // =========================================================
-        // PASSO 3: GERAR PIX DINÂMICO E TIMER
-        // =========================================================
         function initiatePixPayment() {
             appState.orderId = Math.floor(1000 + Math.random() * 9000);
             document.getElementById('order-id-display').textContent = appState.orderId;
             document.getElementById('pix-amount-display').textContent = formatBRL(appState.totalAmount);
 
-            // Gera Payload EMV Pix realista com o valor exato e ID do pedido
-            const amountStr = appState.totalAmount.toFixed(2);
-            const pixPayload = generateMockPixPayload(appState.settings.pixKey, amountStr, `PRINT${appState.orderId}`);
-            document.getElementById('pix-copia-cola-input').value = pixPayload;
+            const payload = `00020126580014br.gov.bcb.pix5204000053039865404${appState.totalAmount.toFixed(2)}5802BR5915GRAFICACELL6009SAO PAULO6304`;
+            document.getElementById('pix-copia-cola-input').value = payload;
 
-            // Renderiza QR Code
             const qrContainer = document.getElementById('qrcode-container');
             qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: pixPayload,
-                width: 190,
-                height: 190,
-                colorDark: '#0f172a',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-            });
+            new QRCode(qrContainer, { text: payload, width: 180, height: 180 });
 
-            startPixTimer(300); // 5 minutos
             goToStep(3);
-        }
-
-        // Monta string padrão BR Code Pix para leitura em qualquer app bancário
-        function generateMockPixPayload(pixKey, amount, txid) {
-            const keyField = `0014br.gov.bcb.pix01${String(pixKey.length).padStart(2, '0')}${pixKey}`;
-            const merchantAccount = `26${String(keyField.length).padStart(2, '0')}${keyField}`;
-            const amountField = `54${String(amount.length).padStart(2, '0')}${amount}`;
-            const txidField = `05${String(txid.length).padStart(2, '0')}${txid}`;
-            const addData = `62${String(txidField.length).padStart(2, '0')}${txidField}`;
-            return `000201${merchantAccount}520400005303986${amountField}5802BR5915PRINTEXPRESS TO6009SAO PAULO${addData}6304A1B2`;
-        }
-
-        function startPixTimer(seconds) {
-            clearInterval(appState.pixTimerInterval);
-            appState.pixSecondsLeft = seconds;
-            updateTimerDisplay();
-
-            appState.pixTimerInterval = setInterval(() => {
-                appState.pixSecondsLeft--;
-                updateTimerDisplay();
-                if (appState.pixSecondsLeft <= 0) {
-                    clearInterval(appState.pixTimerInterval);
-                    showToast('Tempo do QR Code expirado. Gere um novo Pix.', 'error');
-                    goToStep(2);
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const mins = String(Math.floor(appState.pixSecondsLeft / 60)).padStart(2, '0');
-            const secs = String(appState.pixSecondsLeft % 60).padStart(2, '0');
-            document.getElementById('pix-timer').textContent = `${mins}:${secs}`;
         }
 
         function copyPixCode() {
             const input = document.getElementById('pix-copia-cola-input');
             input.select();
-            input.setSelectionRange(0, 99999);
-            try {
-                document.execCommand('copy');
-                showToast('Código Pix Copia e Cola copiado!', 'success');
-            } catch (err) {
-                showToast('Toque e segure no código para copiar.', 'info');
-            }
+            document.execCommand('copy');
+            showToast('Código Pix copiado!', 'success');
         }
 
         function cancelPixAndGoBack() {
-            clearInterval(appState.pixTimerInterval);
             goToStep(2);
         }
 
-        // =========================================================
-        // PASSO 4: CONFIRMAÇÃO WEBHOOK E LIBERAÇÃO DA IMPRESSÃO
-        // =========================================================
-        async function simulateWebhookApproval() {
-            clearInterval(appState.pixTimerInterval);
-            
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('pt-BR');
-            document.getElementById('log-timestamp').textContent = timeStr;
+        function simulateWebhookApproval() {
+            // Regra estrita: Valida se o saldo de créditos GraficaCell cobre o valor do pedido antes de simular a liberação
+            let balance = parseFloat(localStorage.getItem('graficacell_balance') || '0.00');
 
-            // Registra no histórico do administrador
-            const record = {
-                id: appState.orderId,
-                time: timeStr,
-                file: appState.fileName,
-                pages: appState.pageCount * appState.copies,
-                color: appState.colorMode === 'bw' ? 'P&B' : 'Colorido',
-                total: appState.totalAmount
-            };
-            appState.history.unshift(record);
-            try {
-                localStorage.setItem('printexpress_history', JSON.stringify(appState.history));
-            } catch (e) {}
-
-            // Prepara comprovante para @media print
-            document.getElementById('print-receipt-id').textContent = appState.orderId;
-            document.getElementById('print-receipt-date').textContent = now.toLocaleString('pt-BR');
-            document.getElementById('print-receipt-file').textContent = appState.fileName;
-            document.getElementById('print-receipt-details').textContent = 
-                `${appState.pageCount} pág(s) x ${appState.copies} cópia(s) (${record.color})${appState.duplex ? ' - Frente/Verso' : ''}`;
-            document.getElementById('print-receipt-total').textContent = formatBRL(appState.totalAmount);
-
-            goToStep(4);
-            showToast('Pix confirmado! Liberando impressora...', 'success');
-
-            // Tenta enviar comando ao Print Server Local configurado (se houver)
-            const logLine3 = document.getElementById('log-line-3');
-            if (appState.settings.printServerUrl) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 1500);
-                    
-                    await fetch(appState.settings.printServerUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(record),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    logLine3.textContent = `✓ Enviado ao Print Server (${appState.settings.printServerUrl})`;
-                } catch (e) {
-                    // Fallback esperado quando rodando direto no celular Android sem servidor local ativo
-                    logLine3.textContent = '✓ Spooler Android pronto (Toque em Imprimir Agora)';
-                }
+            if (balance < appState.totalAmount) {
+                showToast(`Créditos insuficientes! Necessário: ${formatBRL(appState.totalAmount)} | Saldo: ${formatBRL(balance)}. Peça ao atendente para liberar no painel admin.`, 'error');
+                return;
             }
-        }
 
-        function triggerPhysicalPrint() {
-            // Aciona o serviço nativo de impressão do Android (Serviço de Impressão Padrão / Mopria / Wi-Fi Direct)
-            window.print();
+            // Debita automaticamente do saldo após liberação
+            balance -= appState.totalAmount;
+            localStorage.setItem('graficacell_balance', balance.toFixed(2));
+            updateNfcBadgeUI();
+
+            document.getElementById('print-receipt-id').textContent = appState.orderId;
+            document.getElementById('print-receipt-date').textContent = new Date().toLocaleString('pt-BR');
+            document.getElementById('print-receipt-file').textContent = appState.fileName;
+            document.getElementById('print-receipt-total').textContent = formatBRL(appState.totalAmount);
+            goToStep(4);
+            showToast('Impressão / Xerox liberada com sucesso!', 'success');
         }
 
         function startNewOrder() {
             resetFile();
             appState.copies = 1;
             document.getElementById('copies-count').textContent = '1';
-            document.getElementById('duplex-toggle').checked = false;
-            selectColorMode('bw');
             goToStep(1);
         }
 
-        // =========================================================
-        // PAINEL DO ADMINISTRADOR / CONFIGURAÇÕES
-        // =========================================================
-        function toggleAdminModal() {
-            const modal = document.getElementById('admin-modal');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
+        // --- SISTEMA DE LOGIN DO ADMIN ---
+        function openAdminModal() {
+            document.getElementById('admin-login-modal').classList.remove('hidden');
+            document.getElementById('admin-user-input').value = '';
+            document.getElementById('admin-pass-input').value = '';
+        }
+
+        function closeAdminLogin() {
+            document.getElementById('admin-login-modal').classList.add('hidden');
+        }
+
+        function verifyAdminLogin() {
+            const userInput = document.getElementById('admin-user-input').value.trim();
+            const passInput = document.getElementById('admin-pass-input').value.trim();
+
+            if (userInput === '60557720354' && passInput === '040685') {
+                closeAdminLogin();
+                document.getElementById('admin-modal').classList.remove('hidden');
                 syncSettingsToUI();
-                renderAdminHistory();
+                showToast('Acesso autorizado!', 'success');
+            } else {
+                showToast('Login ou senha incorretos.', 'error');
             }
+        }
+
+        // --- GESTÃO DE CRÉDITOS GRAFICACELL ---
+        function adminWriteCardCredits() {
+            const valor = parseFloat(document.getElementById('admin-recharge-amount').value);
+            if (isNaN(valor) || valor <= 0) {
+                showToast('Informe um valor válido de créditos.', 'error');
+                return;
+            }
+
+            localStorage.setItem('graficacell_balance', valor.toFixed(2));
+            showToast(`Créditos liberados: R$ ${valor.toFixed(2)}!`, 'success');
+            toggleAdminModal();
+            updateNfcBadgeUI();
+        }
+
+        function updateNfcBadgeUI() {
+            const balance = parseFloat(localStorage.getItem('graficacell_balance') || '0.00');
+            const badge = document.getElementById('local-nfc-balance-badge');
+            if (badge) {
+                badge.textContent = `Saldo: ${formatBRL(balance)}`;
+            }
+        }
+
+        function simulateNfcTap() {
+            simulateWebhookApproval();
+        }
+
+        function toggleAdminModal() {
+            document.getElementById('admin-modal').classList.toggle('hidden');
         }
 
         function syncSettingsToUI() {
             document.getElementById('cfg-price-bw').value = appState.settings.priceBw.toFixed(2);
             document.getElementById('cfg-price-color').value = appState.settings.priceColor.toFixed(2);
-            document.getElementById('cfg-gateway').value = appState.settings.gateway;
-            document.getElementById('cfg-pix-key').value = appState.settings.pixKey;
-            document.getElementById('cfg-api-token').value = appState.settings.apiToken;
-            document.getElementById('cfg-print-server').value = appState.settings.printServerUrl;
-
-            document.getElementById('price-label-bw').textContent = `${formatBRL(appState.settings.priceBw)} / pág`;
-            document.getElementById('price-label-color').textContent = `${formatBRL(appState.settings.priceColor)} / pág`;
         }
 
         function saveAdminSettings() {
             const bw = parseFloat(document.getElementById('cfg-price-bw').value);
             const color = parseFloat(document.getElementById('cfg-price-color').value);
-
-            appState.settings.priceBw = isNaN(bw) || bw < 0 ? 0.50 : bw;
-            appState.settings.priceColor = isNaN(color) || color < 0 ? 1.50 : color;
-            appState.settings.gateway = document.getElementById('cfg-gateway').value;
-            appState.settings.pixKey = document.getElementById('cfg-pix-key').value.trim() || 'pix@loja.com.br';
-            appState.settings.apiToken = document.getElementById('cfg-api-token').value.trim();
-            appState.settings.printServerUrl = document.getElementById('cfg-print-server').value.trim();
-
-            try {
-                localStorage.setItem('printexpress_settings', JSON.stringify(appState.settings));
-            } catch (e) {}
-
-            syncSettingsToUI();
-            if (appState.currentStep === 2) {
-                updateOrderCalculation();
-            }
+            appState.settings.priceBw = isNaN(bw) ? 0.50 : bw;
+            appState.settings.priceColor = isNaN(color) ? 1.50 : color;
+            localStorage.setItem('graficacell_settings', JSON.stringify(appState.settings));
             toggleAdminModal();
             showToast('Configurações salvas com sucesso!', 'success');
         }
-
-        function renderAdminHistory() {
-            const list = document.getElementById('admin-history-list');
-            const revEl = document.getElementById('admin-total-revenue');
-
-            const totalRev = appState.history.reduce((acc, item) => acc + item.total, 0);
-            revEl.textContent = `Total: ${formatBRL(totalRev)}`;
-
-            if (appState.history.length === 0) {
-                list.innerHTML = '<p class="text-slate-400 italic">Nenhuma impressão realizada nesta sessão.</p>';
-                return;
-            }
-
-            list.innerHTML = appState.history.map(item => `
-                <div class="p-2.5 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-between">
-                    <div class="min-w-0 pr-2">
-                        <p class="font-bold text-slate-800 truncate">#${item.id} • ${item.file}</p>
-                        <p class="text-[11px] text-slate-500">${item.time} • ${item.pages} pág(s) (${item.color})</p>
-                    </div>
-                    <span class="font-extrabold text-emerald-700 shrink-0">${formatBRL(item.total)}</span>
-                </div>
-            `).join('');
-        }
     </script>
 </body>
-</html>
+</html>  
