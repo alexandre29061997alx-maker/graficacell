@@ -1,428 +1,100 @@
- 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GraficaCell - Autoatendimento de Impressão Direta</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- PDF.js para leitura automática de páginas do PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    
-    <!-- QRCode.js para gerar o QR Code fixo -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
-    <!-- FontAwesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Totem Autoatendimento - Impressão</title>
     <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; user-select: none; }
         body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            background-color: #f1f5f9;
+            margin: 0; padding: 0; background-color: #121212; color: #ffffff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; text-align: center;
         }
-
-        .fade-in {
-            animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        .container {
+            background: #1e1e1e; padding: 40px; border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5); width: 90%; max-width: 600px;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        h1 { font-size: 2.2rem; margin-bottom: 10px; color: #00e676; }
+        p { font-size: 1.2rem; color: #cccccc; margin-bottom: 30px; }
+        .btn-grande {
+            display: block; width: 100%; padding: 25px; margin: 15px 0;
+            font-size: 1.5rem; font-weight: bold; color: #121212;
+            background-color: #00e676; border: none; border-radius: 12px;
+            cursor: pointer; transition: transform 0.1s, background 0.2s;
         }
+        .btn-grande:active { transform: scale(0.98); background-color: #00c853; }
+        .btn-secundario { background-color: #2979ff; color: #fff; }
+        #inputArquivo { display: none; }
+        
+        /* Área oculta na tela, visível apenas na impressão */
+        #area-impressao { display: none; }
 
-        @keyframes pulseRing {
-            0% { transform: scale(0.85); opacity: 0.8; }
-            100% { transform: scale(1.4); opacity: 0; }
-        }
-
-        .pulse-ring::before {
-            content: '';
-            position: absolute;
-            inset: -8px;
-            border-radius: 9999px;
-            border: 3px solid #10b981;
-            animation: pulseRing 1.5s infinite;
+        @media print {
+            body * { visibility: hidden; }
+            #area-impressao, #area-impressao * {
+                visibility: visible; color: #000; background: #fff;
+            }
+            #area-impressao {
+                display: block; position: absolute; left: 0; top: 0; width: 100%;
+                text-align: center; padding: 20px;
+            }
         }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+<body>
 
-    <!-- Toast / Notificação Flutuante -->
-    <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md pointer-events-none transition-all duration-300 opacity-0 -translate-y-4">
-        <div id="toast-box" class="bg-slate-900 text-white px-4 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
-            <i id="toast-icon" class="fa-solid fa-circle-info text-blue-400 text-lg"></i>
-            <span id="toast-message" class="text-sm font-medium leading-tight">Mensagem</span>
-        </div>
-    </div>
+<div class="container">
+    <h1>Autoatendimento</h1>
+    <p>Selecione uma opção para iniciar a impressão</p>
 
-    <!-- Cabeçalho -->
-    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-lg mx-auto px-4 py-3.5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center shadow-lg">
-                    <i class="fa-solid fa-print text-white text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-base tracking-tight leading-none">GraficaCell <span class="text-emerald-400 font-extrabold">Autoatendimento</span></h1>
-                    <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-                        Envio Direto e Impressão Automática
-                    </p>
-                </div>
-            </div>
+    <!-- Opção 1: Gerar Senha / Comprovante Rápido -->
+    <button class="btn-grande" onclick="imprimirSenha()">
+        🎫 Retirar Senha / Comprovante
+    </button>
 
-            <!-- Botão Admin -->
-            <button onclick="openAdminModal()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition text-slate-300 border border-slate-700" title="Contabilidade e Admin">
-                <i class="fa-solid fa-gear text-base"></i>
-            </button>
-        </div>
-    </header>
+    <!-- Opção 2: Selecionar PDF ou Imagem para Imprimir -->
+    <button class="btn-grande btn-secundario" onclick="document.getElementById('inputArquivo').click()">
+        📄 Selecionar Arquivo (PDF / Imagem)
+    </button>
+    <input type="file" id="inputArquivo" accept=".pdf,image/*" onchange="processarArquivo(event)">
+</div>
 
-    <!-- Conteúdo Principal -->
-    <main class="flex-1 max-w-lg w-full mx-auto px-4 py-6 pb-28 space-y-5">
+<!-- Template de Impressão Térmica ou A4 -->
+<div id="area-impressao">
+    <h2>SENHA DE ATENDIMENTO</h2>
+    <h1 id="numero-senha" style="font-size: 48px; margin: 10px 0;">A-001</h1>
+    <p id="data-hora"></p>
+    <hr>
+    <p>Aguarde ser chamado no painel.</p>
+</div>
 
-        <!-- TELA 1: EXIBIDA NO TOTEM (QR CODE FIXO) -->
-        <div id="view-totem" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 text-center space-y-4">
-            <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-800 border border-blue-200 px-3.5 py-1.5 rounded-full text-xs font-bold">
-                <i class="fa-solid fa-qrcode text-blue-600"></i>
-                <span>QR Code Fixo de Autoatendimento</span>
-            </div>
+<script>
+    let contadorSenha = 1;
 
-            <div>
-                <h2 class="text-lg font-extrabold text-slate-900">Escaneie com a câmera do celular</h2>
-                <p class="text-xs text-slate-500 mt-1">Aponte a câmera para abrir a aba de envio direto no seu smartphone.</p>
-            </div>
+    function imprimirSenha() {
+        const agora = new Date();
+        const numeroFormatado = 'A-' + String(contadorSenha).padStart(3, '0');
+        
+        document.getElementById('numero-senha').innerText = numeroFormatado;
+        document.getElementById('data-hora').innerText = agora.toLocaleString('pt-BR');
+        
+        contadorSenha++;
+        window.print();
+    }
 
-            <div class="flex justify-center my-2">
-                <div class="p-4 bg-white rounded-2xl border-2 border-slate-200 shadow-sm inline-block">
-                    <div id="qrcode-container" class="flex items-center justify-center"></div>
-                </div>
-            </div>
+    function processarArquivo(event) {
+        const arquivo = event.target.files[0];
+        if (!arquivo) return;
 
-            <div class="pt-2 border-t border-slate-100">
-                <p class="text-[11px] text-slate-400 mb-2">Modo de Teste Local (Totem):</p>
-                <button onclick="switchToClientView()" class="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
-                    Simular Acesso do Celular (Cliente)
-                </button>
-            </div>
-        </div>
+        const urlArquivo = URL.createObjectURL(arquivo);
+        const janelaImpressao = window.open(urlArquivo, '_blank');
+        
+        janelaImpressao.onload = function() {
+            janelaImpressao.print();
+        };
+    }
+</script>
 
-        <!-- TELA 2: EXIBIDA NO CELULAR DO CLIENTE (APÓS ESCANEAR O QR CODE) -->
-        <div id="view-client" class="hidden space-y-5 fade-in">
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 text-center space-y-4">
-                <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3.5 py-1.5 rounded-full text-xs font-bold">
-                    <i class="fa-solid fa-mobile-screen-button text-emerald-600"></i>
-                    <span>Área de Envio do Cliente</span>
-                </div>
-
-                <div>
-                    <h2 class="text-lg font-extrabold text-slate-900">Escolha o seu documento</h2>
-                    <p class="text-xs text-slate-500 mt-1">Selecione o arquivo desejado. Ele será enviado e impresso automaticamente na GraficaCell.</p>
-                </div>
-
-                <div class="pt-2">
-                    <label for="file-input" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2.5 cursor-pointer">
-                        <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
-                        <span>Selecionar Arquivo (PDF / Imagem)</span>
-                    </label>
-                    <input type="file" id="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden" onchange="handleDirectPrint(event)">
-                </div>
-            </div>
-        </div>
-
-        <!-- INDICADOR DE PROCESSAMENTO AUTOMÁTICO -->
-        <div id="processing-box" class="hidden bg-white rounded-3xl p-6 shadow-sm border border-slate-200 text-center space-y-3 fade-in">
-            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <div>
-                <h3 class="font-bold text-slate-900 text-sm">Processando Arquivo...</h3>
-                <p id="processing-status-text" class="text-xs text-slate-500 mt-0.5">Lendo páginas e enviando direto para a impressora</p>
-            </div>
-        </div>
-
-        <!-- AVISO DE SUCESSO RÁPIDO -->
-        <div id="success-box" class="hidden bg-white rounded-3xl p-6 shadow-sm border border-emerald-200 text-center space-y-4 fade-in">
-            <div class="relative w-16 h-16 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl pulse-ring">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <div>
-                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-                    Impresso com Sucesso
-                </span>
-                <h3 class="text-xl font-extrabold text-slate-900 mt-2">Arquivo Impresso Automaticamente!</h3>
-                <p id="success-details" class="text-xs text-slate-500 mt-1">document.pdf • 3 páginas contabilizadas</p>
-            </div>
-            <button onclick="resetTerminal()" class="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-xs transition">
-                Enviar Outro Arquivo
-            </button>
-        </div>
-
-    </main>
-
-    <!-- TELA DE LOGIN DO ADMINISTRADOR (CONTABILIDADE) -->
-    <div id="admin-login-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl fade-in space-y-4">
-            <div class="flex items-center justify-between border-b pb-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center">
-                        <i class="fa-solid fa-lock"></i>
-                    </div>
-                    <h3 class="font-bold text-slate-900 text-base">Área do Administrador</h3>
-                </div>
-                <button onclick="closeAdminLogin()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            
-            <div class="space-y-3 pt-1">
-                <div>
-                    <label class="text-xs font-bold text-slate-600 block mb-1">Login</label>
-                    <input type="text" id="admin-user-input" placeholder="Digite o login" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono text-slate-900 focus:outline-none focus:border-blue-600">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-600 block mb-1">Senha</label>
-                    <input type="password" id="admin-pass-input" placeholder="Digite a senha" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono text-slate-900 focus:outline-none focus:border-blue-600">
-                </div>
-            </div>
-
-            <button onclick="verifyAdminLogin()" class="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition shadow-md">
-                Acessar Contabilidade
-            </button>
-        </div>
-    </div>
-
-    <!-- MODAL DE CONTABILIDADE E RELATÓRIO DE PÁGINAS -->
-    <div id="admin-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl fade-in">
-            <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-chart-pie text-emerald-400"></i>
-                    <h3 class="font-bold text-base">Contabilidade de Impressões</h3>
-                </div>
-                <button onclick="toggleAdminModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="p-5 overflow-y-auto space-y-5 text-sm">
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total de Páginas Impresas (Autoatendimento)</span>
-                    <div class="flex items-baseline gap-2">
-                        <span id="admin-total-pages" class="text-3xl font-extrabold text-blue-600">0</span>
-                        <span class="text-xs text-slate-500">páginas acumuladas</span>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Histórico de Atendimentos</h4>
-                    <p class="text-xs text-slate-500">Os registros abaixo ajudam no controle financeiro e de fluxo do totem.</p>
-                    
-                    <div id="admin-logs-list" class="bg-slate-100 rounded-2xl p-3 border border-slate-200 max-h-48 overflow-y-auto space-y-2 text-xs font-mono">
-                        <p class="text-slate-400 text-center py-4">Nenhum registro recente.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-4 bg-slate-50 border-t border-slate-200 flex gap-3">
-                <button onclick="clearAccountingLogs()" class="w-1/2 py-3 rounded-2xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition border border-red-200">
-                    Zerar Contabilidade
-                </button>
-                <button onclick="toggleAdminModal()" class="w-1/2 py-3 rounded-2xl bg-slate-900 text-white font-bold text-xs transition">
-                    Fechar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPT JAVASCRIPT -->
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        window.addEventListener('DOMContentLoaded', () => {
-            generateStaticQRCode();
-            updateAdminStats();
-
-            // Verifica se a URL possui parâmetro para abrir diretamente no modo de envio do cliente
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('mode') === 'client') {
-                switchToClientView();
-            }
-        });
-
-        function generateStaticQRCode() {
-            const qrContainer = document.getElementById('qrcode-container');
-            qrContainer.innerHTML = '';
-            
-            // Cria o link apontando para a mesma página, mas adicionando o parâmetro ?mode=client
-            const baseUrl = window.location.href.split('?')[0].split('#')[0];
-            const clientUrl = baseUrl + '?mode=client';
-
-            new QRCode(qrContainer, { text: clientUrl, width: 170, height: 170 });
-        }
-
-        function switchToClientView() {
-            document.getElementById('view-totem').classList.add('hidden');
-            document.getElementById('view-client').classList.remove('hidden');
-        }
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const icon = document.getElementById('toast-icon');
-            const msg = document.getElementById('toast-message');
-
-            msg.textContent = message;
-            icon.className = 'fa-solid text-lg ' + (
-                type === 'success' ? 'fa-circle-check text-emerald-400' :
-                type === 'error' ? 'fa-circle-exclamation text-red-400' :
-                'fa-circle-info text-blue-400'
-            );
-
-            container.classList.remove('opacity-0', '-translate-y-4');
-            clearTimeout(window.toastTimeout);
-            window.toastTimeout = setTimeout(() => {
-                container.classList.add('opacity-0', '-translate-y-4');
-            }, 3200);
-        }
-
-        // FLUXO AUTOMÁTICO DE IMPRESSÃO DIRETA
-        async function handleDirectPrint(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            document.getElementById('view-client').classList.add('hidden');
-            document.getElementById('processing-box').classList.remove('hidden');
-            document.getElementById('success-box').classList.add('hidden');
-
-            let pageCount = 1;
-
-            try {
-                // Se for PDF, lê o número real de páginas de forma automática
-                if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    pageCount = pdfDoc.numPages;
-                } else {
-                    pageCount = 1; // Para imagens ou outros documentos padrão
-                }
-
-                // Salva na contabilidade administrativa
-                registerAccountingEntry(file.name, pageCount);
-
-                document.getElementById('processing-box').classList.add('hidden');
-                document.getElementById('success-details').textContent = `${file.name} • ${pageCount} página(s) contabilizadas`;
-                document.getElementById('success-box').classList.remove('hidden');
-
-                showToast(`Arquivo enviado: ${pageCount} página(s) contabilizadas!`, 'success');
-
-                // Dispara a impressão automática nativa no notebook do totem
-                setTimeout(() => {
-                    window.print();
-                }, 800);
-
-            } catch (err) {
-                document.getElementById('processing-box').classList.add('hidden');
-                document.getElementById('view-client').classList.remove('hidden');
-                showToast('Erro ao processar o arquivo para impressão.', 'error');
-            }
-
-            // O arquivo é limpo do input
-            event.target.value = '';
-        }
-
-        function registerAccountingEntry(fileName, pages) {
-            let totalPages = parseInt(localStorage.getItem('graficacell_total_pages') || '0');
-            totalPages += pages;
-            localStorage.setItem('graficacell_total_pages', totalPages);
-
-            let logs = [];
-            try {
-                logs = JSON.parse(localStorage.getItem('graficacell_logs') || '[]');
-            } catch(e) {}
-
-            const newLog = {
-                date: new Date().toLocaleString('pt-BR'),
-                file: fileName,
-                pages: pages
-            };
-
-            logs.unshift(newLog); // Adiciona no topo
-            if (logs.length > 50) logs.pop(); // Mantém os últimos 50 registros
-            localStorage.setItem('graficacell_logs', JSON.stringify(logs));
-        }
-
-        function resetTerminal() {
-            document.getElementById('success-box').classList.add('hidden');
-            document.getElementById('view-client').classList.remove('hidden');
-        }
-
-        // --- PAINEL DE CONTABILIDADE ADMIN ---
-        function openAdminModal() {
-            document.getElementById('admin-login-modal').classList.remove('hidden');
-            document.getElementById('admin-user-input').value = '';
-            document.getElementById('admin-pass-input').value = '';
-        }
-
-        function closeAdminLogin() {
-            document.getElementById('admin-login-modal').classList.add('hidden');
-        }
-
-        function verifyAdminLogin() {
-            const userInput = document.getElementById('admin-user-input').value.trim();
-            const passInput = document.getElementById('admin-pass-input').value.trim();
-
-            if (userInput === '60557720354' && passInput === '040685') {
-                closeAdminLogin();
-                updateAdminStats();
-                document.getElementById('admin-modal').classList.remove('hidden');
-                showToast('Acesso autorizado!', 'success');
-            } else {
-                showToast('Login ou senha incorretos.', 'error');
-            }
-        }
-
-        function updateAdminStats() {
-            const totalPages = localStorage.getItem('graficacell_total_pages') || '0';
-            document.getElementById('admin-total-pages').textContent = totalPages;
-
-            const logsListContainer = document.getElementById('admin-logs-list');
-            try {
-                const logs = JSON.parse(localStorage.getItem('graficacell_logs') || '[]');
-                if (logs.length === 0) {
-                    logsListContainer.innerHTML = '<p class="text-slate-400 text-center py-4">Nenhum registro recente.</p>';
-                } else {
-                    logsListContainer.innerHTML = logs.map(l => `
-                        <div class="bg-white p-2.5 rounded-xl border border-slate-200 flex justify-between items-center">
-                            <div>
-                                <span class="font-bold text-slate-800 block truncate max-w-[200px]">${l.file}</span>
-                                <span class="text-[10px] text-slate-400">${l.date}</span>
-                            </div>
-                            <span class="font-extrabold bg-emerald-100 text-emerald-800 px-2 py-1 rounded-md text-[11px]">${l.pages} pág(s)</span>
-                        </div>
-                    `).join('');
-                }
-            } catch(e) {
-                logsListContainer.innerHTML = '<p class="text-slate-400 text-center py-4">Erro ao carregar histórico.</p>';
-            }
-        }
-
-        function clearAccountingLogs() {
-            if (confirm('Deseja zerar toda a contabilidade de páginas impressas?')) {
-                localStorage.setItem('graficacell_total_pages', '0');
-                localStorage.setItem('graficacell_logs', JSON.stringify([]));
-                updateAdminStats();
-                showToast('Contabilidade zerada.', 'success');
-            }
-        }
-
-        function toggleAdminModal() {
-            document.getElementById('admin-modal').classList.toggle('hidden');
-        }
-    </script>
 </body>
 </html>
