@@ -1,1061 +1,823 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PrintExpress - Autoatendimento de Impressão</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- PDF.js para leitura real de arquivos PDF no navegador -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    
-    <!-- QRCode.js para gerar QR Code Pix dinâmico -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
-    <!-- FontAwesome para ícones modernos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Totem SaaS - Autoatendimento de Impressão e Cópia</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --success: #16a34a;
+      --warning: #ea580c;
+      --danger: #dc2626;
+      --border: #e2e8f0;
+    }
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            800: '#1e40af',
-                            900: '#0f172a',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            background-color: #f1f5f9;
-        }
+    header {
+      background: var(--text); color: #fff; padding: 1rem 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+    .status-badge {
+      font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 999px;
+      background: #334155; color: #cbd5e1;
+    }
+    .status-badge.online { background: rgba(22, 163, 74, 0.2); color: #4ade80; border: 1px solid #16a34a; }
 
-        /* Animações suaves */
-        .fade-in {
-            animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+    nav {
+      display: flex; gap: 0.5rem; background: #fff; padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    }
+    nav button {
+      padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: #f8fafc;
+      border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted);
+      transition: all 0.2s;
+    }
+    nav button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    main { flex: 1; padding: 1.5rem; max-width: 1100px; width: 100%; margin: 0 auto; }
+    .view { display: none; }
+    .view.active { display: block; }
 
-        @keyframes pulseRing {
-            0% { transform: scale(0.85); opacity: 0.8; }
-            100% { transform: scale(1.4); opacity: 0; }
-        }
+    .card {
+      background: var(--card); border-radius: 12px; padding: 1.5rem;
+      border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--text); }
 
-        .pulse-ring::before {
-            content: '';
-            position: absolute;
-            inset: -8px;
-            border-radius: 9999px;
-            border: 3px solid #10b981;
-            animation: pulseRing 1.5s infinite;
-        }
+    .mode-selector {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;
+    }
+    .mode-card {
+      border: 2px solid var(--border); border-radius: 10px; padding: 0.85rem;
+      text-align: center; cursor: pointer; background: #f8fafc; transition: 0.2s;
+    }
+    .mode-card.active {
+      border-color: var(--primary); background: #eff6ff; color: var(--primary);
+    }
+    .mode-card strong { display: block; font-size: 0.95rem; margin-top: 0.25rem; }
+    .mode-card span { font-size: 0.78rem; color: var(--muted); }
 
-        /* Estilos exclusivos para o momento da impressão nativa no Android */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printable-area, #printable-area * {
-                visibility: visible;
-            }
-            #printable-area {
-                position: fixed;
-                left: 0;
-                top: 0;
-                width: 100%;
-                background: white;
-                padding: 20px;
-                display: block !important;
-            }
-        }
-    </style>
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text); }
+    input, select {
+      width: 100%; padding: 0.75rem; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 1rem; background: #fff;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+
+    .btn {
+      width: 100%; padding: 0.9rem; border: none; border-radius: 8px;
+      font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-scan { background: #0f172a; color: #fff; margin-bottom: 0.5rem; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto; }
+
+    .scan-preview-box {
+      margin-top: 0.75rem; border: 1px dashed var(--border); border-radius: 8px;
+      padding: 0.75rem; text-align: center; background: #f8fafc; display: none;
+    }
+    .scan-preview-box img {
+      max-width: 100%; max-height: 240px; border-radius: 6px; border: 1px solid var(--border);
+    }
+
+    .order-item {
+      border: 1px solid var(--border); border-radius: 8px; padding: 1rem;
+      margin-bottom: 0.75rem; display: flex; justify-content: space-between;
+      align-items: center; gap: 1rem; background: #fff; flex-wrap: wrap;
+    }
+    .order-info h4 { font-size: 1rem; margin-bottom: 0.25rem; }
+    .order-info p { font-size: 0.85rem; color: var(--muted); }
+
+    .badge {
+      padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; display: inline-block;
+    }
+    .badge-pendente { background: #ffedd5; color: var(--warning); }
+    .badge-impresso { background: #dcfce7; color: var(--success); }
+    .badge-copia { background: #e0e7ff; color: #3730a3; }
+
+    .qr-placeholder {
+      width: 220px; height: 220px; margin: 1.5rem auto; background: #f8fafc;
+      border: 2px solid var(--border); border-radius: 12px; display: flex;
+      align-items: center; justify-content: center; font-weight: bold; color: var(--muted);
+    }
+
+    .auto-print-banner {
+      background: #dcfce7; border: 1px solid #16a34a; color: #15803d;
+      padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1rem;
+      display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
+      flex-wrap: wrap; gap: 0.5rem;
+    }
+
+    .toast-box {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text);
+      color: #fff; padding: 0.85rem 1.25rem; border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; font-size: 0.9rem;
+      display: none; align-items: center; gap: 0.5rem;
+    }
+
+    #print-area { display: none; }
+
+    @media print {
+      @page { margin: 0; size: A4; }
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area {
+        display: block !important;
+        position: absolute; left: 0; top: 0; width: 100%;
+      }
+      #print-area img, #print-area canvas {
+        display: block;
+        width: 100%;
+        max-width: 210mm;
+        height: auto;
+        margin: 0 auto;
+        page-break-after: always;
+        break-after: page;
+      }
+      #print-area img:last-child, #print-area canvas:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+    }
+  </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+<body>
 
-    <!-- Toast / Notificação Flutuante (Substitui alert()) -->
-    <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md pointer-events-none transition-all duration-300 opacity-0 -translate-y-4">
-        <div id="toast-box" class="bg-slate-900 text-white px-4 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
-            <i id="toast-icon" class="fa-solid fa-circle-info text-blue-400 text-lg"></i>
-            <span id="toast-message" class="text-sm font-medium leading-tight">Mensagem</span>
+  <header>
+    <h1>🖨️ Gráfica Express - Autoatendimento</h1>
+    <span id="db-status" class="status-badge">Conectando ao Firebase...</span>
+  </header>
+
+  <nav>
+    <button id="tab-totem" class="active" onclick="switchTab('totem')">Totem / Imprimir ou Copiar</button>
+    <button id="tab-admin" onclick="switchTab('admin')">Painel Epson L3250 (Fila)</button>
+  </nav>
+
+  <main>
+    <!-- TELA 1: TOTEM / CLIENTE -->
+    <section id="view-totem" class="view active">
+      <!-- ETAPA 1: QR CODE -->
+      <div id="totem-step-qrcode" class="card" style="max-width: 500px; margin: 0 auto; text-align: center;">
+        <h2>Escaneie o QR Code para Imprimir ou Copiar</h2>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Aponte a câmera do seu celular para enviar um arquivo (até 3 MB) ou digitalizar um documento para cópia imediata.
+        </p>
+        <div class="qr-placeholder">
+          <img id="qr-totem-img" src="" alt="QR Code Totem" style="width: 100%; height: 100%; border-radius: 8px;" />
         </div>
-    </div>
+        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+          <button class="btn btn-primary" onclick="avancarParaEnvio('impressao')">📄 Enviar Arquivo (PDF / Imagem)</button>
+          <button class="btn btn-scan" onclick="avancarParaEnvio('copia')">📷 Digitalizar / Tirar Cópia</button>
+        </div>
+      </div>
 
-    <!-- Cabeçalho App Mobile / Totem -->
-    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-lg mx-auto px-4 py-3.5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center shadow-lg">
-                    <i class="fa-solid fa-print text-white text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-base tracking-tight leading-none">PrintExpress <span class="text-emerald-400 font-extrabold">PIX</span></h1>
-                    <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-                        Totem Online • Autoatendimento
-                    </p>
-                </div>
-            </div>
+      <!-- ETAPA 2: FORMULÁRIO DO CLIENTE -->
+      <div id="totem-step-form" class="card" style="max-width: 600px; margin: 0 auto; display: none;">
+        <h2 id="form-titulo">Envie seu Documento para Impressão</h2>
 
-            <!-- Botão Configurações do Dono / Admin -->
-            <button onclick="toggleAdminModal()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition text-slate-300 border border-slate-700" title="Painel do Administrador">
-                <i class="fa-solid fa-gear text-base"></i>
-            </button>
+        <!-- SELETOR DE MODO: IMPRESSÃO OU CÓPIA DIGITALIZADA -->
+        <div class="mode-selector">
+          <div id="mode-impressao" class="mode-card active" onclick="selecionarModoOperacao('impressao')">
+            <div>📄</div>
+            <strong>Imprimir Arquivo</strong>
+            <span>PDF até 3MB ou Imagem</span>
+          </div>
+          <div id="mode-copia" class="mode-card" onclick="selecionarModoOperacao('copia')">
+            <div>📷</div>
+            <strong>Digitalizar / Cópia</strong>
+            <span>Foto do documento A4</span>
+          </div>
         </div>
 
-        <!-- Barra de Progresso dos 4 Passos -->
-        <div class="bg-slate-800/80 px-4 py-2.5 border-t border-slate-700/60">
-            <div class="max-w-lg mx-auto flex items-center justify-between text-xs font-medium">
-                <div id="step-indicator-1" class="flex items-center gap-1.5 text-emerald-400 font-bold">
-                    <span class="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-[11px]">1</span>
-                    <span>Arquivo</span>
-                </div>
-                <div class="h-[1px] flex-1 bg-slate-700 mx-2"></div>
-                <div id="step-indicator-2" class="flex items-center gap-1.5 text-slate-400">
-                    <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[11px]">2</span>
-                    <span>Opções</span>
-                </div>
-                <div class="h-[1px] flex-1 bg-slate-700 mx-2"></div>
-                <div id="step-indicator-3" class="flex items-center gap-1.5 text-slate-400">
-                    <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[11px]">3</span>
-                    <span>Pix</span>
-                </div>
-                <div class="h-[1px] flex-1 bg-slate-700 mx-2"></div>
-                <div id="step-indicator-4" class="flex items-center gap-1.5 text-slate-400">
-                    <span class="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[11px]">4</span>
-                    <span>Imprimir</span>
-                </div>
-            </div>
+        <div class="form-group">
+          <label for="cliente-nome">Seu Nome</label>
+          <input type="text" id="cliente-nome" placeholder="Ex: João Silva" required />
         </div>
-    </header>
 
-    <!-- Conteúdo Principal -->
-    <main class="flex-1 max-w-lg w-full mx-auto px-4 py-5 pb-28">
-
-        <!-- ========================================================= -->
-        <!-- PASSO 1: UPLOAD E LEITURA REAL DO DOCUMENTO               -->
-        <!-- ========================================================= -->
-        <section id="step-1" class="fade-in space-y-5">
-            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
-                <h2 class="text-lg font-bold text-slate-900">1. Envie seu documento</h2>
-                <p class="text-sm text-slate-500 mt-1">Selecione um arquivo PDF, imagem ou documento do seu celular.</p>
-
-                <!-- Área de Upload Touch-Friendly -->
-                <label for="file-input" class="mt-4 flex flex-col items-center justify-center border-2 border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 active:bg-blue-100/70 rounded-2xl p-7 cursor-pointer transition text-center group">
-                    <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20 group-hover:scale-105 transition">
-                        <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
-                    </div>
-                    <span class="mt-3 font-bold text-blue-900 text-base">Toque para escolher arquivo</span>
-                    <span class="text-xs text-slate-500 mt-1">PDF (contagem automática), JPG, PNG ou DOCX</span>
-                    <input type="file" id="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden" onchange="handleFileUpload(event)">
-                </label>
-
-                <!-- Botão de Teste Rápido (Demonstração) -->
-                <div class="mt-3 flex items-center justify-between pt-3 border-t border-slate-100">
-                    <span class="text-xs text-slate-400">Sem arquivo no celular agora?</span>
-                    <button type="button" onclick="loadSampleDocument()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg active:scale-95 transition">
-                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Usar PDF Exemplo (3 págs)
-                    </button>
-                </div>
-            </div>
-
-            <!-- Loader de Leitura PDF -->
-            <div id="pdf-loading" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex items-center gap-4">
-                <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <div>
-                    <p class="font-bold text-sm text-slate-800">Analisando documento...</p>
-                    <p class="text-xs text-slate-500">Contando páginas e gerando pré-visualização</p>
-                </div>
-            </div>
-
-            <!-- Card de Pré-visualização do Arquivo Carregado -->
-            <div id="file-preview-card" class="hidden bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 fade-in space-y-4">
-                <div class="flex items-start gap-3.5">
-                    <div id="file-icon-box" class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-xl">
-                        <i class="fa-solid fa-file-pdf"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h3 id="file-name-display" class="font-bold text-slate-900 text-sm truncate">documento.pdf</h3>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span id="file-size-display" class="text-xs text-slate-500">1.2 MB</span>
-                            <span class="text-slate-300">•</span>
-                            <span id="file-pages-badge" class="text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
-                                1 página detectada
-                            </span>
-                        </div>
-                    </div>
-                    <button onclick="resetFile()" class="p-2 text-slate-400 hover:text-red-500 rounded-xl" title="Remover arquivo">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-
-                <!-- Canvas de Preview da 1ª Página do PDF ou Imagem -->
-                <div class="bg-slate-100 rounded-2xl p-3 flex flex-col items-center justify-center border border-slate-200 overflow-hidden">
-                    <canvas id="pdf-preview-canvas" class="max-h-56 w-auto rounded-lg shadow-sm bg-white hidden"></canvas>
-                    <img id="img-preview-element" class="max-h-56 w-auto rounded-lg shadow-sm hidden" alt="Pré-visualização">
-                    <div id="doc-placeholder-preview" class="hidden py-8 text-center">
-                        <i class="fa-solid fa-file-word text-4xl text-blue-500 mb-2"></i>
-                        <p class="text-xs font-medium text-slate-600">Documento pronto para impressão</p>
-                    </div>
-                </div>
-
-                <!-- Ajuste manual de páginas (caso não seja PDF ou usuário queira ajustar) -->
-                <div id="manual-pages-box" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-3.5 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-amber-900">Quantidade de páginas</p>
-                        <p class="text-[11px] text-amber-700">Informe o total de páginas do arquivo</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="adjustManualPages(-1)" class="w-8 h-8 rounded-xl bg-white border border-amber-300 font-bold text-amber-900 active:scale-90">-</button>
-                        <span id="manual-pages-value" class="w-8 text-center font-bold text-sm">1</span>
-                        <button onclick="adjustManualPages(1)" class="w-8 h-8 rounded-xl bg-white border border-amber-300 font-bold text-amber-900 active:scale-90">+</button>
-                    </div>
-                </div>
-
-                <button onclick="goToStep(2)" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                    <span>Configurar Impressão</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </div>
-        </section>
-
-        <!-- ========================================================= -->
-        <!-- PASSO 2: OPÇÕES DE IMPRESSÃO E CÁLCULO EM TEMPO REAL      -->
-        <!-- ========================================================= -->
-        <section id="step-2" class="hidden fade-in space-y-4">
-            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-5">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900">2. Opções de Impressão</h2>
-                        <p id="step2-doc-summary" class="text-xs text-slate-500 mt-0.5">arquivo.pdf • 3 páginas</p>
-                    </div>
-                    <button onclick="goToStep(1)" class="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl">
-                        Trocar arquivo
-                    </button>
-                </div>
-
-                <!-- Tipo de Cor -->
-                <div>
-                    <label class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2.5">Cor da Impressão</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button type="button" id="btn-color-bw" onclick="selectColorMode('bw')" class="p-4 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-left transition relative">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="w-8 h-8 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm">
-                                    <i class="fa-solid fa-droplet-slash"></i>
-                                </span>
-                                <i id="check-bw" class="fa-solid fa-circle-check text-blue-600 text-lg"></i>
-                            </div>
-                            <p class="font-bold text-sm text-slate-900">Preto e Branco</p>
-                            <p id="price-label-bw" class="text-xs font-semibold text-blue-700 mt-0.5">R$ 0,50 / pág</p>
-                        </button>
-
-                        <button type="button" id="btn-color-color" onclick="selectColorMode('color')" class="p-4 rounded-2xl border-2 border-slate-200 bg-white text-left transition relative">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-pink-500 via-amber-400 to-cyan-500 text-white flex items-center justify-center text-sm">
-                                    <i class="fa-solid fa-palette"></i>
-                                </span>
-                                <i id="check-color" class="fa-solid fa-circle-check text-slate-200 text-lg"></i>
-                            </div>
-                            <p class="font-bold text-sm text-slate-900">Colorido</p>
-                            <p id="price-label-color" class="text-xs font-semibold text-slate-500 mt-0.5">R$ 1,50 / pág</p>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Quantidade de Cópias -->
-                <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div>
-                        <p class="font-bold text-sm text-slate-900">Quantidade de Cópias</p>
-                        <p class="text-xs text-slate-500">Jogos completos do documento</p>
-                    </div>
-                    <div class="flex items-center gap-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                        <button type="button" onclick="changeCopies(-1)" class="w-10 h-10 rounded-xl bg-white shadow-sm font-bold text-lg text-slate-700 active:scale-90 transition flex items-center justify-center">
-                            -
-                        </button>
-                        <span id="copies-count" class="w-8 text-center font-extrabold text-base text-slate-900">1</span>
-                        <button type="button" onclick="changeCopies(1)" class="w-10 h-10 rounded-xl bg-blue-600 shadow-sm font-bold text-lg text-white active:scale-90 transition flex items-center justify-center">
-                            +
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Frente e Verso (Duplex) -->
-                <div class="flex items-center justify-between pt-3 border-t border-slate-100">
-                    <div>
-                        <p class="font-bold text-sm text-slate-900">Impressão Frente e Verso</p>
-                        <p class="text-xs text-slate-500">Economiza papel (mesmo valor por página)</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="duplex-toggle" class="sr-only peer" onchange="updateOrderCalculation()">
-                        <div class="w-12 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Resumo Financeiro -->
-            <div class="bg-slate-900 text-white rounded-3xl p-5 shadow-lg space-y-3">
-                <div class="flex justify-between text-xs text-slate-400">
-                    <span>Cálculo detalhado:</span>
-                    <span id="calc-formula-display">3 págs × 1 cópia × R$ 0,50</span>
-                </div>
-                <div class="flex items-baseline justify-between pt-2 border-t border-slate-800">
-                    <span class="text-sm font-medium text-slate-300">Total a Pagar</span>
-                    <span id="total-price-display" class="text-3xl font-extrabold text-emerald-400">R$ 1,50</span>
-                </div>
-
-                <button onclick="initiatePixPayment()" class="w-full mt-2 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-slate-950 font-extrabold text-base shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2">
-                    <i class="fa-brands fa-pix text-xl"></i>
-                    <span>Gerar QR Code Pix</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- ========================================================= -->
-        <!-- PASSO 3: CHECKOUT PIX DINÂMICO E WEBHOOK                  -->
-        <!-- ========================================================= -->
-        <section id="step-3" class="hidden fade-in space-y-4">
-            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 text-center space-y-4">
-                <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-800 border border-amber-200 px-3.5 py-1.5 rounded-full text-xs font-bold">
-                    <i class="fa-regular fa-clock animate-spin"></i>
-                    <span>Expira em <span id="pix-timer">05:00</span></span>
-                </div>
-
-                <div>
-                    <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Valor do Pedido #<span id="order-id-display">8492</span></p>
-                    <h2 id="pix-amount-display" class="text-3xl font-extrabold text-slate-900 mt-0.5">R$ 1,50</h2>
-                </div>
-
-                <!-- Container do QR Code Real -->
-                <div class="flex justify-center my-2">
-                    <div class="p-3.5 bg-white rounded-2xl border-2 border-slate-200 shadow-inner inline-block">
-                        <div id="qrcode-container" class="flex items-center justify-center"></div>
-                    </div>
-                </div>
-
-                <p class="text-xs text-slate-500 max-w-xs mx-auto">
-                    Abra o app do seu banco no celular, escolha <strong>Pix Copia e Cola</strong> ou aponte a câmera para o QR Code acima.
-                </p>
-
-                <!-- Pix Copia e Cola -->
-                <div class="bg-slate-100 p-3 rounded-2xl border border-slate-200 text-left">
-                    <label class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Código Pix Copia e Cola</label>
-                    <div class="flex items-center gap-2">
-                        <input type="text" id="pix-copia-cola-input" readonly class="bg-transparent text-xs text-slate-700 font-mono w-full focus:outline-none truncate" value="00020126580014br.gov.bcb.pix...">
-                        <button onclick="copyPixCode()" class="shrink-0 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5">
-                            <i class="fa-regular fa-copy"></i>
-                            <span>Copiar</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Status de Aguardando Webhook -->
-                <div class="pt-2 flex items-center justify-center gap-2.5 text-xs font-semibold text-blue-700 bg-blue-50 py-3 rounded-2xl">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
-                    <span>Aguardando confirmação automática do banco...</span>
-                </div>
-            </div>
-
-            <!-- Painel de Simulação de Webhook (Para Teste no Celular) -->
-            <div class="bg-slate-900 text-white rounded-3xl p-4 border border-slate-700 shadow-lg space-y-3">
-                <div class="flex items-center gap-2 text-xs text-emerald-400 font-bold">
-                    <i class="fa-solid fa-bolt"></i>
-                    <span>AMBIENTE DE TESTE / SIMULADOR DE WEBHOOK</span>
-                </div>
-                <p class="text-xs text-slate-300 leading-relaxed">
-                    Em produção, o gateway (Mercado Pago / OpenPix) envia um POST automático assim que o Pix é pago. Toque abaixo para simular a aprovação instantânea:
-                </p>
-                <button onclick="simulateWebhookApproval()" class="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-slate-950 font-extrabold text-sm transition flex items-center justify-center gap-2 shadow-md">
-                    <i class="fa-solid fa-check-double"></i>
-                    <span>Simular Pagamento Aprovado (Webhook)</span>
-                </button>
-                <button onclick="cancelPixAndGoBack()" class="w-full py-2 text-xs text-slate-400 hover:text-white font-medium">
-                    Cancelar e voltar às opções
-                </button>
-            </div>
-        </section>
-
-        <!-- ========================================================= -->
-        <!-- PASSO 4: PAGAMENTO CONFIRMADO E LIBERAÇÃO DA IMPRESSÃO    -->
-        <!-- ========================================================= -->
-        <section id="step-4" class="hidden fade-in space-y-5">
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-emerald-200 text-center space-y-4">
-                <div class="relative w-20 h-20 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl pulse-ring">
-                    <i class="fa-solid fa-check"></i>
-                </div>
-
-                <div>
-                    <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-                        Pagamento Confirmado
-                    </span>
-                    <h2 class="text-2xl font-extrabold text-slate-900 mt-2">Impressão Liberada!</h2>
-                    <p id="release-status-text" class="text-sm text-slate-600 mt-1">
-                        O arquivo foi enviado para a fila da impressora.
-                    </p>
-                </div>
-
-                <!-- Log Técnico de Comunicação com Print Server / Spooler -->
-                <div class="bg-slate-900 text-left rounded-2xl p-4 font-mono text-[11px] text-emerald-400 space-y-1.5 overflow-x-auto">
-                    <div class="text-slate-400 border-b border-slate-800 pb-1 mb-1 flex justify-between">
-                        <span>SPOOLER / PRINT SERVER LOG</span>
-                        <span id="log-timestamp">14:32:01</span>
-                    </div>
-                    <p id="log-line-1">✓ Webhook PIX_APPROVED recebido</p>
-                    <p id="log-line-2">✓ Token de liberação validado</p>
-                    <p id="log-line-3" class="text-blue-300">→ Disparando comando de impressão...</p>
-                </div>
-
-                <!-- Botões de Ação Física -->
-                <div class="space-y-2.5 pt-2">
-                    <button onclick="triggerPhysicalPrint()" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-base shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-print"></i>
-                        <span>Imprimir Agora / Comprovante</span>
-                    </button>
-
-                    <button onclick="startNewOrder()" class="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-sm transition">
-                        Nova Impressão
-                    </button>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- ========================================================= -->
-    <!-- ÁREA OCULTA PARA IMPRESSÃO NATIVA ANDROID (@media print)  -->
-    <!-- ========================================================= -->
-    <div id="printable-area" class="hidden">
-        <div style="border: 2px solid #000; padding: 20px; font-family: monospace; max-width: 400px; margin: 0 auto;">
-            <h2 style="text-align: center; margin: 0;">PRINTEXPRESS AUTOATENDIMENTO</h2>
-            <p style="text-align: center; font-size: 12px; margin-top: 4px;">COMPROVANTE DE IMPRESSÃO LIBERADA</p>
-            <hr>
-            <p><strong>PEDIDO:</strong> #<span id="print-receipt-id">0000</span></p>
-            <p><strong>DATA/HORA:</strong> <span id="print-receipt-date"></span></p>
-            <p><strong>ARQUIVO:</strong> <span id="print-receipt-file"></span></p>
-            <p><strong>DETALHES:</strong> <span id="print-receipt-details"></span></p>
-            <p><strong>VALOR PAGO (PIX):</strong> <span id="print-receipt-total"></span></p>
-            <hr>
-            <p style="text-align: center; font-size: 11px;">Obrigado por utilizar nosso totem!</p>
+        <div class="form-group">
+          <label for="tipo-servico">Cor e Papel da Impressão / Cópia</label>
+          <select id="tipo-servico" onchange="atualizarPreviewDigitalizacao()">
+            <option value="pb">Preto e Branco (A4 Comum)</option>
+            <option value="color">Colorido (A4 Comum)</option>
+            <option value="foto">Papel Fotográfico 180g (Colorido)</option>
+          </select>
         </div>
-    </div>
 
-    <!-- ========================================================= -->
-    <!-- MODAL DE CONFIGURAÇÕES DO DONO / ADMIN & API              -->
-    <!-- ========================================================= -->
-    <div id="admin-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl fade-in">
-            <!-- Header Modal -->
-            <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-sliders text-emerald-400"></i>
-                    <h3 class="font-bold text-base">Painel do Proprietário & API</h3>
-                </div>
-                <button onclick="toggleAdminModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <!-- Corpo Scrollável -->
-            <div class="p-5 overflow-y-auto space-y-5 text-sm">
-                <!-- Preços -->
-                <div class="space-y-3">
-                    <h4 class="font-bold text-slate-900 border-b pb-1.5">1. Tabela de Preços (R$)</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-xs font-semibold text-slate-600 block mb-1">Página P&B (R$)</label>
-                            <input type="number" step="0.10" id="cfg-price-bw" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-900" value="0.50">
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-slate-600 block mb-1">Página Colorida (R$)</label>
-                            <input type="number" step="0.10" id="cfg-price-color" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-900" value="1.50">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gateway Pix -->
-                <div class="space-y-3">
-                    <h4 class="font-bold text-slate-900 border-b pb-1.5">2. Gateway de Pagamento Pix</h4>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Provedor API</label>
-                        <select id="cfg-gateway" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white font-medium">
-                            <option value="mercadopago">Mercado Pago (Pix API)</option>
-                            <option value="openpix">OpenPix / Woovi</option>
-                            <option value="efi">Efí Bank (Gerencianet)</option>
-                            <option value="asaas">Asaas</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Chave Pix Recebedor / Nome Loja</label>
-                        <input type="text" id="cfg-pix-key" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono" value="papelaria.express@pix.com.br">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Access Token (Opcional p/ Produção)</label>
-                        <input type="password" id="cfg-api-token" placeholder="APP_USR-00000000-0000..." class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono">
-                    </div>
-                </div>
-
-                <!-- Print Server Local -->
-                <div class="space-y-3">
-                    <h4 class="font-bold text-slate-900 border-b pb-1.5">3. Print Server Local (CUPS / Spooler)</h4>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Endpoint Local de Impressão (POST)</label>
-                        <input type="text" id="cfg-print-server" placeholder="http://192.168.1.100:8080/print" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono" value="http://localhost:8080/api/spooler/release">
-                        <p class="text-[11px] text-slate-500 mt-1">Se vazio ou offline, o app usará a impressão nativa do Android (`window.print()`).</p>
-                    </div>
-                </div>
-
-                <!-- Histórico do Dia -->
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between border-b pb-1.5">
-                        <h4 class="font-bold text-slate-900">4. Histórico de Impressões Pagas</h4>
-                        <span id="admin-total-revenue" class="text-xs font-extrabold text-emerald-600">Total: R$ 0,00</span>
-                    </div>
-                    <div id="admin-history-list" class="space-y-2 max-h-36 overflow-y-auto text-xs">
-                        <p class="text-slate-400 italic">Nenhuma impressão realizada nesta sessão.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Modal -->
-            <div class="p-4 bg-slate-50 border-t border-slate-200 flex gap-3">
-                <button onclick="saveAdminSettings()" class="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-bold text-sm active:scale-98 transition">
-                    Salvar Configurações
-                </button>
-            </div>
+        <div class="form-group">
+          <label for="qtd-paginas">Quantidade de Cópias</label>
+          <input type="number" id="qtd-paginas" value="1" min="1" max="100" />
         </div>
-    </div>
 
-    <!-- ========================================================= -->
-    <!-- LÓGICA JAVASCRIPT DO SISTEMA                              -->
-    <!-- ========================================================= -->
-    <script>
-        // Configura o Worker do PDF.js via CDN
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        <!-- BLOCO MODO ARQUIVO (PDF ATÉ 3MB / IMAGEM) -->
+        <div id="bloco-arquivo" class="form-group">
+          <label for="arquivo-upload">Selecionar Arquivo (PDF até 3 MB ou Imagem JPG/PNG)</label>
+          <input type="file" id="arquivo-upload" accept="image/*,.pdf,application/pdf" onchange="processarArquivoSelecionado(event)" />
+          <small id="arquivo-status" style="color: var(--muted); display: block; margin-top: 0.35rem;">
+            Limite máximo para PDF: 3 MB. Impressão automática na Epson L3250.
+          </small>
+        </div>
 
-        // Estado Global da Aplicação
-        const appState = {
-            currentStep: 1,
-            file: null,
-            fileName: '',
-            fileType: '',
-            pageCount: 1,
-            colorMode: 'bw', // 'bw' ou 'color'
-            copies: 1,
-            duplex: false,
-            orderId: null,
-            totalAmount: 0,
-            pixTimerInterval: null,
-            pixSecondsLeft: 300,
-            settings: {
-                priceBw: 0.50,
-                priceColor: 1.50,
-                gateway: 'mercadopago',
-                pixKey: 'papelaria.express@pix.com.br',
-                apiToken: '',
-                printServerUrl: 'http://localhost:8080/api/spooler/release'
-            },
-            history: []
+        <!-- BLOCO MODO DIGITALIZAÇÃO / CÓPIA -->
+        <div id="bloco-digitalizacao" class="form-group" style="display: none;">
+          <label>Capturar Documento para Cópia</label>
+          <input type="file" id="camera-scan-input" accept="image/*" capture="environment" style="display: none;" onchange="processarDigitalizacao(event)" />
+          <button type="button" class="btn btn-scan" onclick="document.getElementById('camera-scan-input').click()">
+            📸 Abrir Câmera / Escolher Foto do Documento
+          </button>
+          <small id="scan-status" style="color: var(--muted); display: block; margin-top: 0.3rem;">
+            Enquadre bem a folha em local iluminado. O sistema ajusta o contraste automaticamente.
+          </small>
+          <div id="scan-preview-box" class="scan-preview-box">
+            <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0.4rem;">Pré-visualização da Cópia:</p>
+            <img id="scan-preview-img" src="" alt="Prévia da Digitalização" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="link-arquivo">Ou cole um Link / Observação (Opcional)</label>
+          <input type="text" id="link-arquivo" placeholder="Link do Google Drive ou observação" />
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+          <button id="btn-enviar-fila" class="btn btn-primary" onclick="enviarParaFila()">Enviar para Epson L3250</button>
+          <button class="btn" style="background: #e2e8f0; color: var(--text);" onclick="voltarParaQrCode()">Voltar</button>
+        </div>
+      </div>
+
+      <!-- ETAPA 3: TELA DE ESPERA / SUCESSO -->
+      <div id="totem-step-sucesso" class="card" style="max-width: 500px; margin: 0 auto; text-align: center; display: none;">
+        <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🖨️</div>
+        <h2>Enviado para a Epson L3250!</h2>
+        <p style="color: var(--text); font-size: 1.05rem; margin: 1rem 0;">
+          Seu pedido entrou na fila e <strong>será impresso automaticamente</strong>.
+        </p>
+        <div style="background: #dcfce7; border: 1px solid #16a34a; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+          <strong style="color: var(--success); font-size: 1.1rem;">IMPRESSÃO AUTOMÁTICA EM ANDAMENTO</strong>
+        </div>
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="resetarTotem()">Novo Pedido / Nova Cópia</button>
+      </div>
+    </section>
+
+    <!-- TELA 2: PAINEL DO NOTEBOOK (EPSON L3250 AUTOMÁTICA) -->
+    <section id="view-admin" class="view">
+      <div class="auto-print-banner">
+        <div>
+          <strong>🟢 Impressão Automática Epson L3250 Ativa:</strong> Deixe esta aba aberta no notebook. PDFs (até 3MB), imagens e cópias digitalizadas imprimem sozinhos.
+        </div>
+        <label style="display: flex; align-items: center; gap: 0.4rem; margin: 0; cursor: pointer;">
+          <input type="checkbox" id="toggle-auto-print" checked style="width: auto;" />
+          Ativado
+        </label>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2>Fila da Epson L3250 em Tempo Real</h2>
+          <span id="contador-fila" style="font-size: 0.85rem; color: var(--muted);">0 pedidos</span>
+        </div>
+        <div id="lista-pedidos">
+          <p style="color: var(--muted);">Aguardando arquivos ou digitalizações do totem...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- NOTIFICAÇÃO VISUAL -->
+  <div id="toast" class="toast-box"></div>
+
+  <!-- ÁREA DE IMPRESSÃO A4 PARA EPSON L3250 -->
+  <div id="print-area"></div>
+
+  <!-- PDF.JS PARA RENDERIZAR E IMPRIMIR PDF AUTOMATICAMENTE SEM BLOQUEIO DE POP-UP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  </script>
+
+  <!-- FIREBASE SDK v10 (COMPAT) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    // =========================================================================
+    // CONFIGURAÇÃO DO FIREBASE (PROJETO 'GRAFICACELL' - INALTERADA)
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWurztjY7JZ_q6UG29RUXwq0YGjJdPKDk",
+      authDomain: "graficacell.firebaseapp.com",
+      projectId: "graficacell",
+      storageBucket: "graficacell.firebasestorage.app",
+      messagingSenderId: "712658630232",
+      appId: "1:712658630232:web:197f72b81e22e9935afc2d"
+    };
+
+    let db = null;
+    let firebaseAtivo = false;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      firebaseAtivo = true;
+      document.getElementById("db-status").textContent = "Firebase Online (graficacell)";
+      document.getElementById("db-status").classList.add("online");
+    } catch (e) {
+      console.error("Erro ao iniciar Firebase:", e);
+      document.getElementById("db-status").textContent = "Erro de Conexão";
+    }
+
+    function mostrarAviso(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "flex";
+      setTimeout(() => { t.style.display = "none"; }, 4000);
+    }
+
+    // =========================================================================
+    // CONFIGURAÇÃO DO LINK DO QR CODE
+    // =========================================================================
+    const linkGithubPages = "https://SEU-USUARIO.github.io/SEU-REPOSITORIO/";
+    const urlTotem = (window.location.hostname === "localhost" || window.location.protocol === "file:") && !linkGithubPages.includes("SEU-USUARIO")
+      ? linkGithubPages
+      : window.location.href.split('?')[0];
+
+    document.getElementById("qr-totem-img").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(urlTotem + "?modo=cliente")}`;
+
+    if (window.location.search.includes("modo=cliente")) {
+      avancarParaEnvio("impressao");
+    }
+
+    // =========================================================================
+    // CONTROLE DE TELAS E MODO (IMPRESSÃO vs DIGITALIZAÇÃO/CÓPIA)
+    // =========================================================================
+    let modoOperacaoAtual = "impressao";
+    let arquivoBase64Temp = null;
+    let nomeArquivoTemp = "";
+    let imagemOriginalScan = null;
+
+    function selecionarModoOperacao(modo) {
+      modoOperacaoAtual = modo;
+      arquivoBase64Temp = null;
+      nomeArquivoTemp = "";
+      imagemOriginalScan = null;
+
+      document.getElementById("mode-impressao").classList.toggle("active", modo === "impressao");
+      document.getElementById("mode-copia").classList.toggle("active", modo === "copia");
+
+      document.getElementById("bloco-arquivo").style.display = modo === "impressao" ? "block" : "none";
+      document.getElementById("bloco-digitalizacao").style.display = modo === "copia" ? "block" : "none";
+      document.getElementById("scan-preview-box").style.display = "none";
+      document.getElementById("arquivo-upload").value = "";
+      document.getElementById("camera-scan-input").value = "";
+
+      document.getElementById("form-titulo").textContent = modo === "copia"
+        ? "Digitalizar Documento para Cópia (A4)"
+        : "Envie seu Documento para Impressão";
+    }
+
+    function avancarParaEnvio(modo = "impressao") {
+      document.getElementById("totem-step-qrcode").style.display = "none";
+      document.getElementById("totem-step-form").style.display = "block";
+      document.getElementById("totem-step-sucesso").style.display = "none";
+      selecionarModoOperacao(modo);
+    }
+
+    function voltarParaQrCode() {
+      document.getElementById("totem-step-qrcode").style.display = "block";
+      document.getElementById("totem-step-form").style.display = "none";
+      document.getElementById("totem-step-sucesso").style.display = "none";
+    }
+
+    function resetarTotem() {
+      document.getElementById("cliente-nome").value = "";
+      document.getElementById("qtd-paginas").value = "1";
+      document.getElementById("link-arquivo").value = "";
+      document.getElementById("arquivo-upload").value = "";
+      document.getElementById("camera-scan-input").value = "";
+      arquivoBase64Temp = null;
+      nomeArquivoTemp = "";
+      imagemOriginalScan = null;
+      document.getElementById("scan-preview-box").style.display = "none";
+      document.getElementById("arquivo-status").textContent = "Limite máximo para PDF: 3 MB. Impressão automática na Epson L3250.";
+      voltarParaQrCode();
+    }
+
+    // =========================================================================
+    // LEITURA DE ARQUIVOS (PDF ATÉ 3MB E IMAGENS)
+    // =========================================================================
+    const MAX_PDF_BYTES = 3 * 1024 * 1024; // 3 MB
+
+    function processarArquivoSelecionado(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      nomeArquivoTemp = file.name;
+
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement("canvas");
+            const maxDim = 1800;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = (h * maxDim) / w; w = maxDim; }
+              else { w = (w * maxDim) / h; h = maxDim; }
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            arquivoBase64Temp = canvas.toDataURL("image/jpeg", 0.85);
+            document.getElementById("arquivo-status").innerHTML = `<strong style="color:var(--success)">✔ Imagem pronta:</strong> ${file.name}`;
+          };
+          img.src = e.target.result;
         };
+        reader.readAsDataURL(file);
+      } else if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+        if (file.size > MAX_PDF_BYTES) {
+          mostrarAviso("⚠️ PDF acima do limite máximo de 3 MB. Escolha um arquivo menor.");
+          event.target.value = "";
+          arquivoBase64Temp = null;
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          arquivoBase64Temp = e.target.result;
+          const tamanhoMB = (file.size / (1024 * 1024)).toFixed(2);
+          document.getElementById("arquivo-status").innerHTML = `<strong style="color:var(--success)">✔ PDF anexado (${tamanhoMB} MB):</strong> ${file.name}`;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        mostrarAviso("⚠️ Formato não suportado. Envie PDF (até 3MB) ou imagem JPG/PNG.");
+        event.target.value = "";
+      }
+    }
 
-        // Carregar configurações salvas no navegador (localStorage)
-        window.addEventListener('DOMContentLoaded', () => {
-            try {
-                const saved = localStorage.getItem('printexpress_settings');
-                if (saved) {
-                    appState.settings = { ...appState.settings, ...JSON.parse(saved) };
-                }
-                const savedHistory = localStorage.getItem('printexpress_history');
-                if (savedHistory) {
-                    appState.history = JSON.parse(savedHistory);
-                }
-            } catch (e) {
-                console.warn('Erro ao ler localStorage:', e);
+    // =========================================================================
+    // DIGITALIZAÇÃO / CÓPIA (AJUSTE DE CONTRASTE E P&B / COLORIDO)
+    // =========================================================================
+    function processarDigitalizacao(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      nomeArquivoTemp = "Copia_Digitalizada_" + new Date().toLocaleTimeString("pt-BR").replace(/:/g, "-") + ".jpg";
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          imagemOriginalScan = img;
+          atualizarPreviewDigitalizacao();
+          document.getElementById("scan-status").innerHTML = `<strong style="color:var(--success)">✔ Documento digitalizado pronto para cópia!</strong>`;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function atualizarPreviewDigitalizacao() {
+      if (modoOperacaoAtual !== "copia" || !imagemOriginalScan) return;
+
+      const tipo = document.getElementById("tipo-servico").value;
+      const ehPB = tipo === "pb";
+
+      const canvas = document.createElement("canvas");
+      const maxDim = 1800;
+      let w = imagemOriginalScan.width;
+      let h = imagemOriginalScan.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = (h * maxDim) / w; w = maxDim; }
+        else { w = (w * maxDim) / h; h = maxDim; }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+
+      // Aplica filtro de scanner (realce de nitidez/contraste e P&B se escolhido)
+      ctx.filter = ehPB
+        ? "grayscale(100%) contrast(135%) brightness(108%)"
+        : "contrast(115%) brightness(104%) saturate(110%)";
+      ctx.drawImage(imagemOriginalScan, 0, 0, w, h);
+
+      arquivoBase64Temp = canvas.toDataURL("image/jpeg", 0.85);
+      document.getElementById("scan-preview-img").src = arquivoBase64Temp;
+      document.getElementById("scan-preview-box").style.display = "block";
+    }
+
+    const nomesServicos = {
+      pb: "Preto e Branco (A4)",
+      color: "Colorido (A4)",
+      foto: "Papel Fotográfico"
+    };
+
+    // =========================================================================
+    // ENVIO PARA O FIREBASE (COM SUPORTE A ARQUIVOS ATÉ 3MB VIA PARTES)
+    // =========================================================================
+    const CHUNK_SIZE = 700000; // ~700KB por documento no Firestore para suportar até 3MB
+
+    async function enviarParaFila() {
+      const cliente = document.getElementById("cliente-nome").value.trim();
+      const link = document.getElementById("link-arquivo").value.trim();
+      const btnEnviar = document.getElementById("btn-enviar-fila");
+
+      if (!cliente) {
+        mostrarAviso("⚠️ Por favor, informe seu nome.");
+        return;
+      }
+      if (!arquivoBase64Temp && !link) {
+        mostrarAviso(modoOperacaoAtual === "copia"
+          ? "⚠️ Tire uma foto do documento para fazer a cópia."
+          : "⚠️ Selecione um arquivo PDF/imagem ou cole um link.");
+        return;
+      }
+
+      const tipo = document.getElementById("tipo-servico").value;
+      const qtd = parseInt(document.getElementById("qtd-paginas").value) || 1;
+      const tipoOperacaoLabel = modoOperacaoAtual === "copia" ? "Cópia Digitalizada" : "Impressão";
+
+      btnEnviar.disabled = true;
+      btnEnviar.textContent = "Enviando para Epson L3250...";
+
+      try {
+        if (firebaseAtivo && db) {
+          const precisaDividir = arquivoBase64Temp && arquivoBase64Temp.length > CHUNK_SIZE;
+          const totalPartes = precisaDividir ? Math.ceil(arquivoBase64Temp.length / CHUNK_SIZE) : 0;
+
+          const docRef = await db.collection("pedidos_impressao").add({
+            cliente,
+            operacao: tipoOperacaoLabel,
+            servico: nomesServicos[tipo],
+            corModo: tipo === "pb" ? "Preto e Branco" : "Colorido",
+            quantidade: qtd,
+            arquivo: link || nomeArquivoTemp || "Arquivo Anexado",
+            arquivoData: precisaDividir ? "" : (arquivoBase64Temp || ""),
+            emPartes: precisaDividir,
+            totalPartes: totalPartes,
+            status: "enviando",
+            criadoEm: new Date().toISOString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          if (precisaDividir) {
+            for (let i = 0; i < totalPartes; i++) {
+              const trecho = arquivoBase64Temp.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+              await db.collection("pedidos_impressao_partes").add({
+                pedidoId: docRef.id,
+                indice: i,
+                dados: trecho
+              });
             }
-            syncSettingsToUI();
-        });
+          }
 
-        // Exibir Toast Notification elegante (Substitui alert)
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const icon = document.getElementById('toast-icon');
-            const msg = document.getElementById('toast-message');
-
-            msg.textContent = message;
-            icon.className = 'fa-solid text-lg ' + (
-                type === 'success' ? 'fa-circle-check text-emerald-400' :
-                type === 'error' ? 'fa-circle-exclamation text-red-400' :
-                'fa-circle-info text-blue-400'
-            );
-
-            container.classList.remove('opacity-0', '-translate-y-4');
-            clearTimeout(window.toastTimeout);
-            window.toastTimeout = setTimeout(() => {
-                container.classList.add('opacity-0', '-translate-y-4');
-            }, 3200);
+          // Libera status 'pendente' somente após todas as partes estarem salvas
+          await docRef.update({ status: "pendente" });
         }
 
-        // Navegação entre os 4 passos
-        function goToStep(stepNumber) {
-            appState.currentStep = stepNumber;
-            [1, 2, 3, 4].forEach(num => {
-                document.getElementById(`step-${num}`).classList.add('hidden');
-                const ind = document.getElementById(`step-indicator-${num}`);
-                const circle = ind.querySelector('span');
-                
-                if (num < stepNumber) {
-                    ind.className = 'flex items-center gap-1.5 text-emerald-400 font-semibold';
-                    circle.className = 'w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[11px] font-bold';
-                    circle.innerHTML = '<i class="fa-solid fa-check text-[9px]"></i>';
-                } else if (num === stepNumber) {
-                    ind.className = 'flex items-center gap-1.5 text-white font-bold';
-                    circle.className = 'w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-bold';
-                    circle.textContent = num;
-                } else {
-                    ind.className = 'flex items-center gap-1.5 text-slate-400';
-                    circle.className = 'w-5 h-5 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-[11px]';
-                    circle.textContent = num;
-                }
+        document.getElementById("totem-step-form").style.display = "none";
+        document.getElementById("totem-step-sucesso").style.display = "block";
+      } catch (err) {
+        mostrarAviso("❌ Erro ao enviar para o Firebase: " + err.message);
+      } finally {
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = "Enviar para Epson L3250";
+      }
+    }
+
+    // =========================================================================
+    // MOTOR DE IMPRESSÃO AUTOMÁTICA (IMAGENS + PDF MULTI-PÁGINA + CÓPIAS)
+    // =========================================================================
+    const pedidosJaProcessados = new Set();
+    let filaImpressaoEmExecucao = false;
+    const filaInternaLocal = [];
+
+    function tocarAlertaSonoro() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      } catch (e) {}
+    }
+
+    async function obterDadosCompletosPedido(pedido) {
+      if (!pedido.emPartes) return pedido.arquivoData || "";
+      const snap = await db.collection("pedidos_impressao_partes")
+        .where("pedidoId", "==", pedido.id)
+        .get();
+
+      const partes = [];
+      snap.forEach(d => partes.push(d.data()));
+      partes.sort((a, b) => a.indice - b.indice);
+      return partes.map(p => p.dados).join("");
+    }
+
+    function dataUrlParaUint8Array(dataUrl) {
+      const base64 = dataUrl.split(",")[1];
+      const bin = atob(base64);
+      const len = bin.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = bin.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    async function renderizarPdfNaAreaDeImpressao(pdfDataUrl, copias, ehPretoEBranco) {
+      const area = document.getElementById("print-area");
+      area.innerHTML = "";
+
+      const pdfBytes = dataUrlParaUint8Array(pdfDataUrl);
+      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+      const pdf = await loadingTask.promise;
+
+      for (let c = 0; c < copias; c++) {
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 2.0 });
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          if (ehPretoEBranco) {
+            canvas.style.filter = "grayscale(100%)";
+          }
+
+          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          area.appendChild(canvas);
+        }
+      }
+    }
+
+    function enfileirarImpressaoAutomatica(pedido) {
+      if (pedidosJaProcessados.has(pedido.id)) return;
+      pedidosJaProcessados.add(pedido.id);
+      filaInternaLocal.push(pedido);
+      processarProximaImpressaoDaFila();
+    }
+
+    async function processarProximaImpressaoDaFila() {
+      if (filaImpressaoEmExecucao || filaInternaLocal.length === 0) return;
+
+      const autoPrintAtivo = document.getElementById("toggle-auto-print").checked;
+      const estaNaAbaAdmin = document.getElementById("view-admin").classList.contains("active");
+      if (!autoPrintAtivo || !estaNaAbaAdmin) {
+        filaInternaLocal.length = 0;
+        return;
+      }
+
+      filaImpressaoEmExecucao = true;
+      const pedido = filaInternaLocal.shift();
+
+      try {
+        tocarAlertaSonoro();
+        const dadosArquivo = await obterDadosCompletosPedido(pedido);
+        const area = document.getElementById("print-area");
+        const ehPB = pedido.corModo === "Preto e Branco";
+        const filtroCor = ehPB ? "filter: grayscale(100%);" : "";
+        const copias = Math.min(pedido.quantidade || 1, 50);
+
+        if (dadosArquivo && dadosArquivo.startsWith("data:image/")) {
+          let paginasHtml = "";
+          for (let i = 0; i < copias; i++) {
+            paginasHtml += `<img src="${dadosArquivo}" style="${filtroCor}" />`;
+          }
+          area.innerHTML = paginasHtml;
+
+          await new Promise(resolve => setTimeout(resolve, 600));
+          window.print();
+          await concluirPedido(pedido.id);
+        } else if (dadosArquivo && dadosArquivo.startsWith("data:application/pdf")) {
+          await renderizarPdfNaAreaDeImpressao(dadosArquivo, copias, ehPB);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          window.print();
+          await concluirPedido(pedido.id);
+        } else if (pedido.arquivo && pedido.arquivo.startsWith("http")) {
+          window.open(pedido.arquivo, "_blank");
+          await concluirPedido(pedido.id);
+        }
+      } catch (err) {
+        console.error("Erro ao imprimir pedido:", err);
+        mostrarAviso("❌ Erro na impressão automática: " + err.message);
+      } finally {
+        filaImpressaoEmExecucao = false;
+        if (filaInternaLocal.length > 0) {
+          setTimeout(processarProximaImpressaoDaFila, 1000);
+        }
+      }
+    }
+
+    // =========================================================================
+    // LISTAGEM EM TEMPO REAL (ONSNAPSHOT)
+    // =========================================================================
+    function iniciarListenerPedidos() {
+      if (firebaseAtivo && db) {
+        db.collection("pedidos_impressao")
+          .orderBy("criadoEm", "desc")
+          .limit(50)
+          .onSnapshot((snapshot) => {
+            const lista = [];
+            snapshot.forEach((doc) => {
+              const dados = { id: doc.id, ...doc.data() };
+              if (dados.status === "enviando") return;
+              lista.push(dados);
+
+              if (dados.status === "pendente") {
+                enfileirarImpressaoAutomatica(dados);
+              }
             });
+            renderizarPedidos(lista);
+          }, (error) => {
+            console.error("Erro no listener Firestore:", error);
+            document.getElementById("lista-pedidos").innerHTML = `<p style="color: var(--danger);">Erro ao carregar fila do Firebase.</p>`;
+          });
+      }
+    }
 
-            document.getElementById(`step-${stepNumber}`).classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+    function renderizarPedidos(pedidos) {
+      const container = document.getElementById("lista-pedidos");
+      document.getElementById("contador-fila").textContent = `${pedidos.length} pedido(s)`;
 
-            if (stepNumber === 2) {
-                updateOrderCalculation();
-            }
-        }
+      if (pedidos.length === 0) {
+        container.innerHTML = `<p style="color: var(--muted);">Nenhum arquivo na fila no momento.</p>`;
+        return;
+      }
 
-        // =========================================================
-        // PASSO 1: PROCESSAMENTO DE ARQUIVO E LEITURA DE PDF REAL
-        // =========================================================
-        async function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+      container.innerHTML = pedidos.map(p => `
+        <div class="order-item">
+          <div class="order-info">
+            <h4>${p.cliente} ${p.operacao === 'Cópia Digitalizada' ? '<span class="badge badge-copia">Cópia</span>' : ''}</h4>
+            <p><strong>${p.quantidade}x</strong> ${p.servico} (${p.corModo || 'Padrão'}) | Arquivo: ${p.arquivo}</p>
+            <div style="margin-top: 0.4rem; display: flex; gap: 0.5rem; align-items: center;">
+              <span class="badge ${p.status === 'impresso' ? 'badge-impresso' : 'badge-pendente'}">
+                ${p.status}
+              </span>
+              ${(p.arquivoData || p.emPartes) ? `<button class="btn btn-sm" style="background:#eff6ff; color:var(--primary);" onclick="reimprimirManual('${p.id}')">🖨️ Imprimir Agora</button>` : ''}
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            ${p.status !== 'impresso' ? `<button class="btn btn-success btn-sm" onclick="concluirPedido('${p.id}')">Concluir</button>` : ''}
+            <button class="btn btn-sm" style="background: #e2e8f0;" onclick="excluirPedido('${p.id}')">Excluir</button>
+          </div>
+        </div>
+      `).join("");
+    }
 
-            appState.file = file;
-            appState.fileName = file.name;
-            const sizeKB = (file.size / 1024).toFixed(1);
-            const sizeFormatted = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(2)} MB` : `${sizeKB} KB`;
+    async function reimprimirManual(id) {
+      pedidosJaProcessados.delete(id);
+      const doc = await db.collection("pedidos_impressao").doc(id).get();
+      if (doc.exists) {
+        enfileirarImpressaoAutomatica({ id: doc.id, ...doc.data() });
+      }
+    }
 
-            document.getElementById('file-name-display').textContent = file.name;
-            document.getElementById('file-size-display').textContent = sizeFormatted;
-            document.getElementById('pdf-loading').classList.remove('hidden');
-            document.getElementById('file-preview-card').classList.add('hidden');
+    async function concluirPedido(id) {
+      if (firebaseAtivo && db) {
+        await db.collection("pedidos_impressao").doc(id).update({ status: "impresso" });
+      }
+    }
 
-            // Reset previews
-            const pdfCanvas = document.getElementById('pdf-preview-canvas');
-            const imgEl = document.getElementById('img-preview-element');
-            const docPlaceholder = document.getElementById('doc-placeholder-preview');
-            const manualPagesBox = document.getElementById('manual-pages-box');
-            const fileIconBox = document.getElementById('file-icon-box');
+    async function excluirPedido(id) {
+      if (firebaseAtivo && db) {
+        const partesSnap = await db.collection("pedidos_impressao_partes").where("pedidoId", "==", id).get();
+        const batch = db.batch();
+        partesSnap.forEach(d => batch.delete(d.ref));
+        await batch.commit();
 
-            pdfCanvas.classList.add('hidden');
-            imgEl.classList.add('hidden');
-            docPlaceholder.classList.add('hidden');
-            manualPagesBox.classList.add('hidden');
+        await db.collection("pedidos_impressao").doc(id).delete();
+        mostrarAviso("🗑️ Pedido removido da fila.");
+      }
+    }
 
-            try {
-                if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-                    appState.fileType = 'pdf';
-                    fileIconBox.className = 'w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-xl';
-                    fileIconBox.innerHTML = '<i class="fa-solid fa-file-pdf"></i>';
+    function switchTab(tab) {
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+      document.getElementById("view-" + tab).classList.add("active");
+      document.getElementById("tab-" + tab).classList.add("active");
+    }
 
-                    // Lê o PDF real usando PDF.js
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    appState.pageCount = pdfDoc.numPages;
-
-                    // Renderiza a página 1 no canvas para visualização
-                    const page = await pdfDoc.getPage(1);
-                    const viewport = page.getViewport({ scale: 0.7 });
-                    pdfCanvas.width = viewport.width;
-                    pdfCanvas.height = viewport.height;
-                    const ctx = pdfCanvas.getContext('2d');
-                    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-
-                    pdfCanvas.classList.remove('hidden');
-                    showToast(`PDF lido com sucesso: ${appState.pageCount} página(s)!`, 'success');
-
-                } else if (file.type.startsWith('image/')) {
-                    appState.fileType = 'image';
-                    appState.pageCount = 1;
-                    fileIconBox.className = 'w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 text-xl';
-                    fileIconBox.innerHTML = '<i class="fa-solid fa-file-image"></i>';
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        imgEl.src = e.target.result;
-                        imgEl.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
-                    showToast('Imagem carregada (1 página).', 'success');
-
-                } else {
-                    // DOCX ou outros formatos
-                    appState.fileType = 'doc';
-                    appState.pageCount = 1;
-                    fileIconBox.className = 'w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-xl';
-                    fileIconBox.innerHTML = '<i class="fa-solid fa-file-word"></i>';
-
-                    docPlaceholder.classList.remove('hidden');
-                    manualPagesBox.classList.remove('hidden');
-                    document.getElementById('manual-pages-value').textContent = '1';
-                    showToast('Documento carregado. Confirme o número de páginas.', 'info');
-                }
-
-                updatePageBadge();
-                document.getElementById('pdf-loading').classList.add('hidden');
-                document.getElementById('file-preview-card').classList.remove('hidden');
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('pdf-loading').classList.add('hidden');
-                showToast('Não foi possível ler o PDF. Verifique se não está protegido por senha.', 'error');
-            }
-        }
-
-        // Carrega um exemplo simulado para demonstração instantânea
-        function loadSampleDocument() {
-            appState.file = null;
-            appState.fileName = 'Contrato_Prestacao_Servicos_2026.pdf';
-            appState.fileType = 'pdf';
-            appState.pageCount = 3;
-
-            document.getElementById('file-name-display').textContent = appState.fileName;
-            document.getElementById('file-size-display').textContent = '420 KB';
-            document.getElementById('file-icon-box').className = 'w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-xl';
-            document.getElementById('file-icon-box').innerHTML = '<i class="fa-solid fa-file-pdf"></i>';
-
-            // Desenha uma miniatura de página simulada no Canvas
-            const pdfCanvas = document.getElementById('pdf-preview-canvas');
-            pdfCanvas.width = 210;
-            pdfCanvas.height = 280;
-            const ctx = pdfCanvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, 210, 280);
-            ctx.fillStyle = '#1e293b';
-            ctx.font = 'bold 12px Inter, sans-serif';
-            ctx.fillText('CONTRATO DE SERVIÇOS', 24, 36);
-            ctx.fillStyle = '#94a3b8';
-            for (let y = 58; y < 240; y += 14) {
-                ctx.fillRect(24, y, (y % 28 === 0) ? 130 : 162, 6);
-            }
-
-            pdfCanvas.classList.remove('hidden');
-            document.getElementById('img-preview-element').classList.add('hidden');
-            document.getElementById('doc-placeholder-preview').classList.add('hidden');
-            document.getElementById('manual-pages-box').classList.add('hidden');
-
-            updatePageBadge();
-            document.getElementById('file-preview-card').classList.remove('hidden');
-            showToast('Arquivo de demonstração (3 páginas) carregado!', 'success');
-        }
-
-        function adjustManualPages(delta) {
-            appState.pageCount = Math.max(1, appState.pageCount + delta);
-            document.getElementById('manual-pages-value').textContent = appState.pageCount;
-            updatePageBadge();
-        }
-
-        function updatePageBadge() {
-            const label = appState.pageCount === 1 ? '1 página detectada' : `${appState.pageCount} páginas detectadas`;
-            document.getElementById('file-pages-badge').textContent = label;
-        }
-
-        function resetFile() {
-            document.getElementById('file-input').value = '';
-            document.getElementById('file-preview-card').classList.add('hidden');
-            appState.file = null;
-        }
-
-        // =========================================================
-        // PASSO 2: OPÇÕES E CÁLCULO DE PREÇO
-        // =========================================================
-        function selectColorMode(mode) {
-            appState.colorMode = mode;
-            const btnBw = document.getElementById('btn-color-bw');
-            const btnColor = document.getElementById('btn-color-color');
-            const checkBw = document.getElementById('check-bw');
-            const checkColor = document.getElementById('check-color');
-
-            if (mode === 'bw') {
-                btnBw.className = 'p-4 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-left transition relative';
-                checkBw.className = 'fa-solid fa-circle-check text-blue-600 text-lg';
-                btnColor.className = 'p-4 rounded-2xl border-2 border-slate-200 bg-white text-left transition relative';
-                checkColor.className = 'fa-solid fa-circle-check text-slate-200 text-lg';
-            } else {
-                btnColor.className = 'p-4 rounded-2xl border-2 border-blue-600 bg-blue-50/70 text-left transition relative';
-                checkColor.className = 'fa-solid fa-circle-check text-blue-600 text-lg';
-                btnBw.className = 'p-4 rounded-2xl border-2 border-slate-200 bg-white text-left transition relative';
-                checkBw.className = 'fa-solid fa-circle-check text-slate-200 text-lg';
-            }
-            updateOrderCalculation();
-        }
-
-        function changeCopies(delta) {
-            appState.copies = Math.max(1, Math.min(99, appState.copies + delta));
-            document.getElementById('copies-count').textContent = appState.copies;
-            updateOrderCalculation();
-        }
-
-        function formatBRL(value) {
-            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
-
-        function updateOrderCalculation() {
-            appState.duplex = document.getElementById('duplex-toggle').checked;
-            const unitPrice = appState.colorMode === 'bw' ? appState.settings.priceBw : appState.settings.priceColor;
-            const totalPages = appState.pageCount * appState.copies;
-            appState.totalAmount = totalPages * unitPrice;
-
-            document.getElementById('step2-doc-summary').textContent = `${appState.fileName} • ${appState.pageCount} pág(s)`;
-            document.getElementById('price-label-bw').textContent = `${formatBRL(appState.settings.priceBw)} / pág`;
-            document.getElementById('price-label-color').textContent = `${formatBRL(appState.settings.priceColor)} / pág`;
-
-            document.getElementById('calc-formula-display').textContent = 
-                `${appState.pageCount} pág × ${appState.copies} cópia(s) × ${formatBRL(unitPrice)}`;
-            document.getElementById('total-price-display').textContent = formatBRL(appState.totalAmount);
-        }
-
-        // =========================================================
-        // PASSO 3: GERAR PIX DINÂMICO E TIMER
-        // =========================================================
-        function initiatePixPayment() {
-            appState.orderId = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('order-id-display').textContent = appState.orderId;
-            document.getElementById('pix-amount-display').textContent = formatBRL(appState.totalAmount);
-
-            // Gera Payload EMV Pix realista com o valor exato e ID do pedido
-            const amountStr = appState.totalAmount.toFixed(2);
-            const pixPayload = generateMockPixPayload(appState.settings.pixKey, amountStr, `PRINT${appState.orderId}`);
-            document.getElementById('pix-copia-cola-input').value = pixPayload;
-
-            // Renderiza QR Code
-            const qrContainer = document.getElementById('qrcode-container');
-            qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: pixPayload,
-                width: 190,
-                height: 190,
-                colorDark: '#0f172a',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-            });
-
-            startPixTimer(300); // 5 minutos
-            goToStep(3);
-        }
-
-        // Monta string padrão BR Code Pix para leitura em qualquer app bancário
-        function generateMockPixPayload(pixKey, amount, txid) {
-            const keyField = `0014br.gov.bcb.pix01${String(pixKey.length).padStart(2, '0')}${pixKey}`;
-            const merchantAccount = `26${String(keyField.length).padStart(2, '0')}${keyField}`;
-            const amountField = `54${String(amount.length).padStart(2, '0')}${amount}`;
-            const txidField = `05${String(txid.length).padStart(2, '0')}${txid}`;
-            const addData = `62${String(txidField.length).padStart(2, '0')}${txidField}`;
-            return `000201${merchantAccount}520400005303986${amountField}5802BR5915PRINTEXPRESS TO6009SAO PAULO${addData}6304A1B2`;
-        }
-
-        function startPixTimer(seconds) {
-            clearInterval(appState.pixTimerInterval);
-            appState.pixSecondsLeft = seconds;
-            updateTimerDisplay();
-
-            appState.pixTimerInterval = setInterval(() => {
-                appState.pixSecondsLeft--;
-                updateTimerDisplay();
-                if (appState.pixSecondsLeft <= 0) {
-                    clearInterval(appState.pixTimerInterval);
-                    showToast('Tempo do QR Code expirado. Gere um novo Pix.', 'error');
-                    goToStep(2);
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const mins = String(Math.floor(appState.pixSecondsLeft / 60)).padStart(2, '0');
-            const secs = String(appState.pixSecondsLeft % 60).padStart(2, '0');
-            document.getElementById('pix-timer').textContent = `${mins}:${secs}`;
-        }
-
-        function copyPixCode() {
-            const input = document.getElementById('pix-copia-cola-input');
-            input.select();
-            input.setSelectionRange(0, 99999);
-            try {
-                document.execCommand('copy');
-                showToast('Código Pix Copia e Cola copiado!', 'success');
-            } catch (err) {
-                showToast('Toque e segure no código para copiar.', 'info');
-            }
-        }
-
-        function cancelPixAndGoBack() {
-            clearInterval(appState.pixTimerInterval);
-            goToStep(2);
-        }
-
-        // =========================================================
-        // PASSO 4: CONFIRMAÇÃO WEBHOOK E LIBERAÇÃO DA IMPRESSÃO
-        // =========================================================
-        async function simulateWebhookApproval() {
-            clearInterval(appState.pixTimerInterval);
-            
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('pt-BR');
-            document.getElementById('log-timestamp').textContent = timeStr;
-
-            // Registra no histórico do administrador
-            const record = {
-                id: appState.orderId,
-                time: timeStr,
-                file: appState.fileName,
-                pages: appState.pageCount * appState.copies,
-                color: appState.colorMode === 'bw' ? 'P&B' : 'Colorido',
-                total: appState.totalAmount
-            };
-            appState.history.unshift(record);
-            try {
-                localStorage.setItem('printexpress_history', JSON.stringify(appState.history));
-            } catch (e) {}
-
-            // Prepara comprovante para @media print
-            document.getElementById('print-receipt-id').textContent = appState.orderId;
-            document.getElementById('print-receipt-date').textContent = now.toLocaleString('pt-BR');
-            document.getElementById('print-receipt-file').textContent = appState.fileName;
-            document.getElementById('print-receipt-details').textContent = 
-                `${appState.pageCount} pág(s) x ${appState.copies} cópia(s) (${record.color})${appState.duplex ? ' - Frente/Verso' : ''}`;
-            document.getElementById('print-receipt-total').textContent = formatBRL(appState.totalAmount);
-
-            goToStep(4);
-            showToast('Pix confirmado! Liberando impressora...', 'success');
-
-            // Tenta enviar comando ao Print Server Local configurado (se houver)
-            const logLine3 = document.getElementById('log-line-3');
-            if (appState.settings.printServerUrl) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 1500);
-                    
-                    await fetch(appState.settings.printServerUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(record),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    logLine3.textContent = `✓ Enviado ao Print Server (${appState.settings.printServerUrl})`;
-                } catch (e) {
-                    // Fallback esperado quando rodando direto no celular Android sem servidor local ativo
-                    logLine3.textContent = '✓ Spooler Android pronto (Toque em Imprimir Agora)';
-                }
-            }
-        }
-
-        function triggerPhysicalPrint() {
-            // Aciona o serviço nativo de impressão do Android (Serviço de Impressão Padrão / Mopria / Wi-Fi Direct)
-            window.print();
-        }
-
-        function startNewOrder() {
-            resetFile();
-            appState.copies = 1;
-            document.getElementById('copies-count').textContent = '1';
-            document.getElementById('duplex-toggle').checked = false;
-            selectColorMode('bw');
-            goToStep(1);
-        }
-
-        // =========================================================
-        // PAINEL DO ADMINISTRADOR / CONFIGURAÇÕES
-        // =========================================================
-        function toggleAdminModal() {
-            const modal = document.getElementById('admin-modal');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                syncSettingsToUI();
-                renderAdminHistory();
-            }
-        }
-
-        function syncSettingsToUI() {
-            document.getElementById('cfg-price-bw').value = appState.settings.priceBw.toFixed(2);
-            document.getElementById('cfg-price-color').value = appState.settings.priceColor.toFixed(2);
-            document.getElementById('cfg-gateway').value = appState.settings.gateway;
-            document.getElementById('cfg-pix-key').value = appState.settings.pixKey;
-            document.getElementById('cfg-api-token').value = appState.settings.apiToken;
-            document.getElementById('cfg-print-server').value = appState.settings.printServerUrl;
-
-            document.getElementById('price-label-bw').textContent = `${formatBRL(appState.settings.priceBw)} / pág`;
-            document.getElementById('price-label-color').textContent = `${formatBRL(appState.settings.priceColor)} / pág`;
-        }
-
-        function saveAdminSettings() {
-            const bw = parseFloat(document.getElementById('cfg-price-bw').value);
-            const color = parseFloat(document.getElementById('cfg-price-color').value);
-
-            appState.settings.priceBw = isNaN(bw) || bw < 0 ? 0.50 : bw;
-            appState.settings.priceColor = isNaN(color) || color < 0 ? 1.50 : color;
-            appState.settings.gateway = document.getElementById('cfg-gateway').value;
-            appState.settings.pixKey = document.getElementById('cfg-pix-key').value.trim() || 'pix@loja.com.br';
-            appState.settings.apiToken = document.getElementById('cfg-api-token').value.trim();
-            appState.settings.printServerUrl = document.getElementById('cfg-print-server').value.trim();
-
-            try {
-                localStorage.setItem('printexpress_settings', JSON.stringify(appState.settings));
-            } catch (e) {}
-
-            syncSettingsToUI();
-            if (appState.currentStep === 2) {
-                updateOrderCalculation();
-            }
-            toggleAdminModal();
-            showToast('Configurações salvas com sucesso!', 'success');
-        }
-
-        function renderAdminHistory() {
-            const list = document.getElementById('admin-history-list');
-            const revEl = document.getElementById('admin-total-revenue');
-
-            const totalRev = appState.history.reduce((acc, item) => acc + item.total, 0);
-            revEl.textContent = `Total: ${formatBRL(totalRev)}`;
-
-            if (appState.history.length === 0) {
-                list.innerHTML = '<p class="text-slate-400 italic">Nenhuma impressão realizada nesta sessão.</p>';
-                return;
-            }
-
-            list.innerHTML = appState.history.map(item => `
-                <div class="p-2.5 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-between">
-                    <div class="min-w-0 pr-2">
-                        <p class="font-bold text-slate-800 truncate">#${item.id} • ${item.file}</p>
-                        <p class="text-[11px] text-slate-500">${item.time} • ${item.pages} pág(s) (${item.color})</p>
-                    </div>
-                    <span class="font-extrabold text-emerald-700 shrink-0">${formatBRL(item.total)}</span>
-                </div>
-            `).join('');
-        }
-    </script>
+    // Inicialização
+    iniciarListenerPedidos();
+  </script>
 </body>
 </html>
